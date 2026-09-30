@@ -1,0 +1,37 @@
+name: CI FutSchool
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validar-repositorio:
+    name: Validar repositorio
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar el repositorio
+        uses: actions/checkout@v6
+
+      - name: Verificar README
+        run: |
+          if [ ! -s README.md ]; then
+            echo "Error: README.md no existe o está vacío."
+            exit 1
+          fi
+          echo "README.md correcto."
+
+      - name: Verificar carpetas del proyecto
+        run: |
+          for carpeta in app ci docs; do
+            if [ ! -d "$carpeta" ]; then
+              echo "Error: falta la carpeta $carpeta."
+              exit 1
+            fi
+          done
+          echo "Las carpetas app, ci y docs están presentes."
