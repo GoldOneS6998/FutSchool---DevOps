@@ -33,8 +33,9 @@ responsable, prioridad y estimación; no se asignan personas sin su acuerdo.
 
 ## Publicación actual
 
-Se conservan las pruebas escritas, pero no se ejecutan nuevas pruebas ni
-compilaciones por petición del propietario. CI estructural sigue activo;
-el workflow Flutter es manual. No marques verificaciones sin ejecutarlas.
+El propietario autorizó ejecutar las verificaciones en GitHub Actions.
+El workflow Flutter sigue siendo manual y conserva sus resultados reales en
+logs y artefactos. La plantilla de documentación queda vacía para completarla
+por el propietario. No marques verificaciones sin comprobar los resultados.
 
 Consulta [el proceso Scrum](docs/scrum/proceso.md).

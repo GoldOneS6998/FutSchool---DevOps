@@ -1,36 +1,48 @@
 # Registro de validación del login
 
-Fecha: 2026-10-04. Estado de entrega: revisión pendiente.
+Plantilla de resultados para completar por el propietario. Los campos de
+resultados reales y evidencia se dejan vacíos por solicitud expresa.
 
-## Antecedentes observados antes de la pausa
+## Ejecución automatizada
 
-En el cliente de origen se ejecutó `flutter analyze` sin incidencias y cuatro
-pruebas de widgets pasaron en una copia temporal fuera de OneDrive. Cubrían
-arranque/pantalla pequeña, campos vacíos, credenciales rechazadas/reintento y
-sesión Google simulada/cierre. Usaron un servicio de prueba, no Firebase real.
+El workflow `flutter-validation.yml` ejecuta formato, análisis, pruebas de
+widgets y compilación Android. Los logs y artefactos reales se conservan en
+GitHub Actions; esta plantilla no los sustituye ni afirma resultados.
 
-Esos resultados preceden a la configuración Android final y la migración a
-`app/`; no demuestran que este commit final funcione en un dispositivo.
+La ejecución se realiza en el fork de publicación sobre la rama del PR:
+[Actions](https://github.com/GoldOneS6998/FutSchool---DevOps/actions).
+No requiere integrar todavía el PR en el repositorio destino.
 
-Se inició una compilación Android antes de la pausa. No se confirmó su resultado
-final ni un APK entregable. No se declara compilación exitosa.
-
-## Verificación de esta entrega
-
-Solo revisión de archivos, configuración y diferencias Git. No se ejecutan
-pruebas, análisis Flutter ni compilaciones nuevas por indicación del propietario.
-
-| Control | Estado |
+| Campo | Valor a completar |
 | --- | --- |
-| Formato y análisis sobre el commit final | Pendiente |
-| Pruebas unitarias/widgets del repositorio final | Pendiente |
-| Build Android final | Pendiente |
-| Acceso Firebase correo real | Pendiente |
-| Acceso Google real y cancelación | Pendiente |
-| Persistencia y cierre en teléfono | Pendiente |
-| Revisión independiente | Pendiente |
-| Vista web/enlace remoto | Pausada, sin configuración web |
+| Fecha y responsable | |
+| Commit/ref comprobado | |
+| Enlace a ejecución de Actions | |
+| Entorno y dispositivo | |
 
-Al reanudar: registrar commit, comandos, entorno, fecha, resultados y evidencia
-sin correos personales, contraseñas ni tokens. No usar pruebas simuladas como
-evidencia de acceso real ni marcar criterios sin comprobarlos.
+| Control | Resultado real | Evidencia / observaciones |
+| --- | --- | --- |
+| Formato sobre el commit comprobado | | |
+| Análisis estático | | |
+| Pruebas de widgets | | |
+| Build Android debug | | |
+| Acceso Firebase con correo real | | |
+| Acceso Google real | | |
+| Cancelación del selector Google | | |
+| Persistencia de sesión en teléfono | | |
+| Cierre de sesión en teléfono | | |
+| Revisión independiente | | |
+| Vista web/enlace remoto | | |
+
+## Alcance de las pruebas
+
+Los widgets usan un servicio de prueba: verifican el formulario y las
+transiciones de sesión sin autenticar contra Firebase real. La compilación
+verifica integración técnica; no demuestra acceso OAuth en un dispositivo.
+
+La prueba manual depende de registrar las huellas, confirmar los proveedores y
+usar cuentas reales. El enlace web sigue pausado y sin configuración Firebase
+web. No completar los campos de estas pruebas con resultados de widgets.
+
+Registrar solo evidencia observada, sin contraseñas, tokens ni datos personales.
+No declarar Definition of Done sin validación real y revisión independiente.

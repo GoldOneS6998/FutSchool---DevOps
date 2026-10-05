@@ -21,8 +21,9 @@ y [AUTH-GOOGLE / Issue #4](https://github.com/HecCol/FutSchool---DevOps/issues/4
 | Sesión y cierre | HU-03 | Implementada | `app/app.dart`, bienvenida |
 | Configuración Android | Ambas | Incorporada | JSON real y Gradle; falta certificado en consola |
 | Registrar SHA-1 y confirmar proveedor correo | Ambas | Pendiente | Acción en cuenta Firebase propietaria |
-| Pruebas de widgets | Ambas | Escritas | No ejecutadas nuevamente para esta entrega |
-| Build final y pruebas en teléfono | Ambas | Pausadas | Petición del propietario |
+| Pruebas de widgets | Ambas | Ejecución autorizada | Consultar logs y artefactos de GitHub Actions |
+| Build Android final | Ambas | Ejecución autorizada | Consultar GitHub Actions |
+| Pruebas de acceso real en teléfono | Ambas | Pendiente | Certificado y cuenta real |
 | Revisión independiente e integración | Ambas | Pendiente | PR borrador |
 | Documentación y plantillas | Ambas | Preparadas | `docs/`, `.github/`, `ci/` |
 
@@ -30,7 +31,8 @@ y [AUTH-GOOGLE / Issue #4](https://github.com/HecCol/FutSchool---DevOps/issues/4
 
 - Firebase todavía requiere configuración de certificado para Google Android.
 - Sin confirmación del proveedor correo ni acceso real verificado.
-- El propietario solicitó pausar pruebas; DoD sigue pendiente.
+- El propietario autorizó pruebas en GitHub Actions; los resultados en la
+  documentación quedan vacíos para que él los complete. DoD sigue pendiente.
 - La cuenta de publicación no tiene permiso de escritura en el repositorio
   destino; entrega mediante fork y PR, conservando su `main`.
 - Vista web fuera del objetivo Android actual; preparación pausada.

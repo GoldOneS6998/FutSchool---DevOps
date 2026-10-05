@@ -12,8 +12,8 @@ Android está configurado con Firebase `futschool-2ef84`.
 
 **Estado: revisión pendiente, no listo para producción.** Falta registrar el
 certificado Android, confirmar el proveedor de correo y comprobar el acceso
-con cuentas reales. No se realizaron nuevas pruebas para esta entrega por
-indicación del propietario. La vista web y el enlace para probar desde un
+con cuentas reales. El propietario autorizó ejecutar las verificaciones en GitHub Actions;
+los resultados se consultan allí y la plantilla de evidencia se deja vacía. La vista web y el enlace para probar desde un
 teléfono siguen pendientes; no hay un sitio publicado.
 
 ## Estructura

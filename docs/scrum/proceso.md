@@ -36,8 +36,8 @@ después de cada evento; no se rellenan retrospectivamente como si hubieran ocur
 - Configuración y documentación actualizadas; sin credenciales administrativas.
 - Sin fallos críticos conocidos; aceptación registrada por el equipo.
 
-La instrucción de no ejecutar pruebas pausa la verificación, pero no reduce la
-DoD. El login permanece en revisión; no se mueve a Done ni se publica como release.
+La ejecución automatizada fue autorizada. No sustituye el acceso real ni la
+revisión independiente requeridos por la DoD. El login permanece en revisión; no se mueve a Done ni se publica como release.
 
 ## Tablero propuesto
 
