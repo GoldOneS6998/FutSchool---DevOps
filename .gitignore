@@ -1,0 +1,28 @@
+# Herramientas y archivos generados
+**/.dart_tool/
+**/build/
+**/coverage/
+**/.pub-cache/
+**/.flutter-plugins-dependencies
+**/.idea/
+**/.kotlin/
+*.iml
+*.log
+.DS_Store
+Thumbs.db
+
+# Configuración privada y certificados
+.env
+.env.*
+!.env.example
+**/local.properties
+**/key.properties
+*.jks
+*.keystore
+*.pem
+*service-account*.json
+*firebase-adminsdk*.json
+
+# Temporales
+/tmp/
+/output/
