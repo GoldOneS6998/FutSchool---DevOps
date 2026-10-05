@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "72991991466",
+    "project_id": "futschool-2ef84",
+    "storage_bucket": "futschool-2ef84.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:72991991466:android:25765543950601921212d3",
+        "android_client_info": {
+          "package_name": "mx.futschool.futschool"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "72991991466-ej4piovq3ecautq508jg119ec38fqbfr.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDuT7r0U-17uYFTSnL-nooD4m-0rKUeApA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "72991991466-ej4piovq3ecautq508jg119ec38fqbfr.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
