@@ -16,7 +16,7 @@ La transición depende de una sesión Firebase, no de aceptar campos localmente.
 
 Correo: formulario → Firebase → estado de sesión → bienvenida.
 Google Android: selector de cuenta → ID token → credencial Firebase → sesión.
-Google web usa popup Firebase; aún falta configuración de plataforma.
+Google web usa popup Firebase y opciones explícitas de la app web registrada.
 
 Durante el envío se bloquean ambos botones. La contraseña se oculta de forma
 predeterminada y no se registran credenciales en logs. El cierre termina la
@@ -29,6 +29,6 @@ siguen pendientes. Firebase Auth identifica al usuario; los permisos del
 futuro backend o servicio de datos requieren autorización independiente.
 No se otorgan permisos por ocultar botones en la interfaz.
 
-Android es la plataforma configurada. Web, esquemas OAuth iOS y escritorio
+Android y web tienen configuración Firebase. Los esquemas OAuth iOS y escritorio
 están pendientes. Release aún utiliza firma de desarrollo; producción requiere
 un certificado definitivo. Las carpetas reservadas no implican funciones listas.
