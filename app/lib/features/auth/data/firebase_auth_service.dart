@@ -25,6 +25,11 @@ class FirebaseAuthService implements AuthService {
         'user-disabled' => 'Esta cuenta está deshabilitada.',
         'network-request-failed' => 'Revisa tu conexión e intenta de nuevo.',
         'too-many-requests' => 'Demasiados intentos. Intenta más tarde.',
+        'unauthorized-domain' => 'Este dominio necesita autorización en Firebase para acceder con Google.',
+        'popup-blocked' =>
+          'Permite las ventanas emergentes para iniciar sesión con Google.',
+        'operation-not-allowed' =>
+          'Este método de acceso debe habilitarse en Firebase.',
         'account-exists-with-different-credential' =>
           'Inicia sesión con el método original de tu cuenta.',
         'popup-closed-by-user' ||

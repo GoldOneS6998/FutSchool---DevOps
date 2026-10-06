@@ -16,5 +16,12 @@ flutter pub get
 flutter run -d ID_DEL_DISPOSITIVO_ANDROID
 ```
 
-Las carpetas web/iOS/escritorio se conservan como base; falta configuración
-Firebase. No hay túnel ni vista web publicada.
+Web inicializa Firebase con `lib/app/firebase_web_options.dart`. Para verla:
+
+```sh
+flutter run -d web-server --web-port 5318
+```
+
+Abrir `http://localhost:5318`. Para Google confirmar `localhost` en los dominios
+autorizados de Firebase. iOS/escritorio requieren configuración específica.
+No hay túnel ni vista web publicada.

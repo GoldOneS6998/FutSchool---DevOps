@@ -7,6 +7,8 @@
 - Archivo: `app/android/app/google-services.json`, proporcionado por el propietario.
 - Google Services configurado en Gradle Kotlin DSL.
 - Plugins Flutter: `firebase_core`, `firebase_auth` y `google_sign_in`.
+- Web: opciones proporcionadas por el propietario en
+  `app/lib/app/firebase_web_options.dart`, usadas al inicializar Firebase web.
 
 Elegir Kotlin en la consola es compatible con Android en Flutter. Los plugins
 Flutter aportan los SDK; no se añade una segunda app ni dependencias duplicadas.
@@ -35,9 +37,16 @@ privada. Producción requiere firma definitiva y huellas Google Play si aplica.
 
 ## Teléfono mediante navegador
 
-El enlace solicitado está pausado. Requiere registrar una app web, obtener sus
-opciones reales, inicializar Firebase web y autorizar el dominio de vista previa.
-El JSON Android no contiene un app ID web válido. No hay túnel ni despliegue.
+La app web está registrada y sus opciones se incorporaron el 2026-10-06.
+El acceso por correo y el popup Google usan Firebase Authentication.
+No se crea automáticamente una cuenta de prueba ni se agrega Analytics.
+
+Para probar localmente, iniciar `flutter run -d web-server --web-port 5317`
+y abrir `http://localhost:5317`. En Authentication → Configuración → Dominios
+autorizados confirmar `localhost`; si se usa `127.0.0.1`, autorizar también ese
+host. Cualquier dominio futuro del enlace para teléfono requiere autorización.
+El túnel y el despliegue siguen pendientes. Las opciones cliente no prueban
+que el acceso con una cuenta real funcione ni habilitan los proveedores.
 
 ## Referencias
 
