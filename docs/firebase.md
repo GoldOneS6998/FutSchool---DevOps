@@ -28,7 +28,8 @@ autorización y restricciones de API se administran en Firebase/Google Cloud.
 
 3. Descargar nuevamente el JSON tras registrar huellas. El archivo recibido
    contiene cliente OAuth web, pero no cliente Android vinculado a SHA-1.
-4. Crear una cuenta de prueba de correo en la consola; no hay registro en UI.
+4. Confirmar que la cuenta de prueba informada aparece en la lista Usuarios;
+   no hay registro de cuentas en la UI de FutSchool.
 5. Cuando se autoricen pruebas, verificar acceso, cancelación, errores,
    persistencia y cierre en un dispositivo Android con Google Play.
 
@@ -41,12 +42,27 @@ La app web está registrada y sus opciones se incorporaron el 2026-10-06.
 El acceso por correo y el popup Google usan Firebase Authentication.
 No se crea automáticamente una cuenta de prueba ni se agrega Analytics.
 
-Para probar localmente, iniciar `flutter run -d web-server --web-port 5317`
-y abrir `http://localhost:5317`. En Authentication → Configuración → Dominios
+Para probar localmente, iniciar `flutter run -d web-server --web-port 5318`
+y abrir `http://localhost:5318`. En Authentication → Configuración → Dominios
 autorizados confirmar `localhost`; si se usa `127.0.0.1`, autorizar también ese
 host. Cualquier dominio futuro del enlace para teléfono requiere autorización.
 El túnel y el despliegue siguen pendientes. Las opciones cliente no prueban
 que el acceso con una cuenta real funcione ni habilitan los proveedores.
+
+## Cuenta de prueba
+
+El propietario informó la creación de una cuenta el 2026-10-06. La captura
+recibida muestra el formulario de alta todavía abierto y la lista sin usuarios;
+su guardado no está confirmado por evidencia posterior.
+
+1. En Authentication → Usuarios, confirmar que el usuario esté listado.
+2. Confirmar Correo electrónico/contraseña en Método de acceso.
+3. Abrir la app e introducir las credenciales de forma privada.
+4. Comprobar bienvenida, persistencia y cierre antes de registrar resultados.
+
+No se publica el correo, contraseña ni la captura que contiene credenciales.
+La contraseña visible en esa captura debe reemplazarse antes de usar la cuenta.
+La tabla de resultados reales continúa vacía para que el propietario la complete.
 
 ## Referencias
 

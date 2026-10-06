@@ -41,8 +41,8 @@ transiciones de sesión sin autenticar contra Firebase real. La compilación
 verifica integración técnica; no demuestra acceso OAuth en un dispositivo.
 
 La prueba manual depende de registrar las huellas, confirmar los proveedores y
-usar cuentas reales. El enlace web sigue pausado y sin configuración Firebase
-web. No completar los campos de estas pruebas con resultados de widgets.
+usar cuentas reales. Firebase web ya tiene opciones cliente; falta confirmar
+dominio autorizado, cuenta de prueba y sesión real. El enlace externo sigue pendiente. No completar los campos de estas pruebas con resultados de widgets.
 
 Registrar solo evidencia observada, sin contraseñas, tokens ni datos personales.
 No declarar Definition of Done sin validación real y revisión independiente.

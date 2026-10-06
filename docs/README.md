@@ -6,7 +6,8 @@
 - [Sprint 01](scrum/sprint-01.md): objetivo y tareas de autenticación.
 - [Proceso Scrum](scrum/proceso.md): acuerdos, ceremonias propuestas y DoD.
 - [Arquitectura](arquitectura.md): módulos y límites.
-- [Firebase](firebase.md): configuración y dependencias externas.
+- [Firebase](firebase.md): configuración, cuenta de prueba y dependencias externas.
+- [Ejecución local](ejecucion-local.md): PowerShell, vista web y solución de arranque.
 - [ADR 0001](adr/0001-firebase-auth.md): decisión de autenticación.
 - [Validación](evidencias/validacion-login.md): antecedentes y pendientes.
 

@@ -24,7 +24,10 @@ y [AUTH-GOOGLE / Issue #4](https://github.com/HecCol/FutSchool---DevOps/issues/4
 | Pruebas de widgets | Ambas | Ejecución autorizada | Consultar logs y artefactos de GitHub Actions |
 | Build Android final | Ambas | Ejecución autorizada | Consultar GitHub Actions |
 | Pruebas de acceso real en teléfono | Ambas | Pendiente | Certificado y cuenta real |
-| Revisión independiente e integración | Ambas | Pendiente | PR borrador |
+| Integración del incremento Android | Ambas | Integrado | [PR #5](https://github.com/HecCol/FutSchool---DevOps/pull/5) |
+| Configuración Firebase web | WEB-PREVIEW | Incorporada en esta entrega | Opciones de cliente proporcionadas por el propietario |
+| Cuenta de prueba y acceso real web | HU-03 | Confirmación pendiente | Creación informada; captura no acredita guardado |
+| Integración del incremento web y revisión | WEB-PREVIEW | Pendiente | Nuevo PR posterior al #5 |
 | Documentación y plantillas | Ambas | Preparadas | `docs/`, `.github/`, `ci/` |
 
 ## Impedimentos y decisiones
@@ -35,7 +38,10 @@ y [AUTH-GOOGLE / Issue #4](https://github.com/HecCol/FutSchool---DevOps/issues/4
   documentación quedan vacíos para que él los complete. DoD sigue pendiente.
 - La cuenta de publicación no tiene permiso de escritura en el repositorio
   destino; entrega mediante fork y PR, conservando su `main`.
-- Vista web fuera del objetivo Android actual; preparación pausada.
+- Vista web añadida a petición del propietario; configuración incorporada.
+  El enlace externo para teléfono y la autenticación real siguen pendientes.
+- El propietario informó una cuenta de prueba; la captura muestra el formulario
+  de alta aún abierto. Confirmar su presencia en Usuarios, sin publicar credenciales.
 
 ## Review y retrospectiva
 

@@ -58,6 +58,7 @@ cuentas reales sigue pendiente de validación.
 ## Trabajo del equipo
 
 - [Documentación](docs/README.md).
+- [Ejecutar localmente](docs/ejecucion-local.md).
 - [Product Backlog](docs/scrum/product-backlog.md).
 - [Sprint de autenticación](docs/scrum/sprint-01.md).
 - [Scrum, Definition of Ready y Definition of Done](docs/scrum/proceso.md).
