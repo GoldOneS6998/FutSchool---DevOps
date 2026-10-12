@@ -63,7 +63,7 @@ class _TorneosPageState extends State<TorneosPage> {
     return _mockTournaments.where((t) {
       final matchesSearch =
           t.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-              t.category.toLowerCase().contains(_searchQuery.toLowerCase());
+          t.category.toLowerCase().contains(_searchQuery.toLowerCase());
 
       final matchesFilter = switch (_selectedFilter) {
         TournamentStatus.all => true,
@@ -234,10 +234,7 @@ class _FilterChipItem extends StatelessWidget {
 }
 
 class _TournamentCard extends StatelessWidget {
-  const _TournamentCard({
-    required this.tournament,
-    required this.statusColor,
-  });
+  const _TournamentCard({required this.tournament, required this.statusColor});
 
   final Tournament tournament;
   final Color statusColor;
@@ -260,8 +257,10 @@ class _TournamentCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
@@ -276,8 +275,10 @@ class _TournamentCard extends StatelessWidget {
                   ),
                 ),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: statusColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(20),

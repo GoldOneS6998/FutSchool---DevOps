@@ -1,5 +1,22 @@
 # Ejecutar FutSchool localmente
 
+Para revisar el incremento de administración, utiliza `feature/administrador`
+o el checkout local `FutSchool-admin`. Iniciar la web muestra el login; el panel
+requiere Firestore habilitado, reglas publicadas y el claim de la cuenta
+administradora asignado según [la guía](administrador.md). No hay un modo público
+que omita estos permisos.
+
+Mientras la propuesta siga en revisión, la rama está publicada en el fork
+`GoldOneS6998/FutSchool---DevOps`. Desde un clon sin cambios pendientes:
+
+```sh
+git fetch https://github.com/GoldOneS6998/FutSchool---DevOps.git feature/administrador
+git switch --detach FETCH_HEAD
+```
+
+Estos comandos permiten revisar la versión propuesta antes de que se integre en
+`HecCol/FutSchool---DevOps`. El cambio de rama no publica ni configura Firebase.
+
 ## Flutter instalado en PATH
 
 ```sh

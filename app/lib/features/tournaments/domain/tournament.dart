@@ -1,8 +1,4 @@
-enum TournamentStatus {
-  all,
-  upcoming,
-  finished,
-}
+enum TournamentStatus { all, upcoming, finished }
 
 class Tournament {
   final String id;

@@ -69,7 +69,9 @@ class _RegisterPageState extends State<RegisterPage> {
       if (mounted) setState(() => _error = error.message);
     } catch (_) {
       if (mounted) {
-        setState(() => _error = 'No se pudo crear la cuenta. Intenta de nuevo.');
+        setState(
+          () => _error = 'No se pudo crear la cuenta. Intenta de nuevo.',
+        );
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -168,10 +170,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       const SizedBox(height: 4),
                       const Text(
                         'Regístrate para continuar',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 15,
-                        ),
+                        style: TextStyle(color: Colors.white70, fontSize: 15),
                       ),
                       const SizedBox(height: 24),
 

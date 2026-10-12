@@ -6,6 +6,13 @@ flujo de colaboración Scrum con integración por Pull Request.
 
 ## Estado del incremento
 
+El módulo de [administrador](docs/administrador.md) agrega torneos, equipos,
+partidos y marcadores sobre Firestore, con permisos verificados por Security Rules.
+Se trabaja en `feature/administrador`; ver [alcance y aceptación](docs/scrum/sprint-02-administrador.md).
+La activación de Firestore y del primer administrador se realiza según la guía.
+Los resultados locales del módulo están en [validación del administrador](docs/evidencias/validacion-admin.md);
+la plantilla histórica del login no reemplaza esta evidencia.
+
 El login sustituye la aplicación de ejemplo: correo y contraseña, Google,
 validación, mensajes de error, observación de sesión y cierre de sesión.
 Android está configurado con Firebase `futschool-2ef84`.
@@ -24,9 +31,13 @@ app/                       Cliente Flutter y proyectos de plataforma
   lib/app/                 Aplicación, tema y selección de pantalla
   lib/features/auth/       Presentación, contrato y servicio Firebase
   lib/features/home/       Bienvenida tras el acceso
+  lib/features/admin/      Administración, contratos y repositorio Firestore
   lib/core/                Infraestructura compartida reservada
   lib/shared/              Componentes compartidos reservados
-  test/                    Pruebas de widgets del login
+  test/                    Pruebas de autenticación, permisos y administración
+tests/firestore/           Pruebas de reglas en emulador y dependencias fijadas
+scripts/grant-admin.cjs    Asignación del primer administrador por operador
+firestore.rules           Autorización y validación en servidor
 docs/                      Documentos originales y documentación técnica
   scrum/                   Backlog, sprint y acuerdos de trabajo
   adr/                     Decisiones de arquitectura

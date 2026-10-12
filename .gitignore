@@ -25,5 +25,10 @@ Thumbs.db
 *firebase-adminsdk*.json
 
 # Temporales
+/tests/firestore/node_modules/
+/tests/firestore/.cache/
+**/.firebase/
+**/firestore-debug.log
+**/ui-debug.log
 /tmp/
 /output/

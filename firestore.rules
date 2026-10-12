@@ -1,0 +1,135 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.admin == true
+        && request.auth.token.email_verified == true;
+    }
+    function boundedList() { return request.query.limit != null && request.query.limit <= 200; }
+    function identifier(value) {
+      return value is string && value.matches('^[a-zA-Z0-9_-]{1,128}$');
+    }
+    function author(data) {
+      return data.createdBy == request.auth.uid && data.createdAt == request.time;
+    }
+    function tournamentPath(id) { return /databases/$(database)/documents/adminTournaments/$(id); }
+    function teamPath(id) { return /databases/$(database)/documents/adminTeams/$(id); }
+    function matchPath(id) { return /databases/$(database)/documents/adminMatches/$(id); }
+    function reservationPath(id) { return /databases/$(database)/documents/adminReservations/$(id); }
+    function validTournament(data) {
+      return data.keys().hasAll(['name', 'description', 'startDate', 'endDate', 'maxTeams', 'teamCount', 'lastTeamId', 'createdBy', 'createdAt'])
+        && data.keys().hasOnly(['name', 'description', 'startDate', 'endDate', 'maxTeams', 'teamCount', 'lastTeamId', 'createdBy', 'createdAt'])
+        && data.name is string && data.name.size() >= 3 && data.name.size() <= 100
+        && data.name.matches('^[^\\r\\n]*\\S[^\\r\\n]*$')
+        && data.description is string && data.description.size() <= 2000
+        && data.startDate is timestamp && data.endDate is timestamp && data.endDate >= data.startDate
+        && data.maxTeams is int && data.maxTeams >= 2 && data.maxTeams <= 64
+        && data.teamCount is int && data.teamCount >= 0 && data.teamCount <= data.maxTeams;
+    }
+    function validTeam(data) {
+      return data.keys().hasAll(['name', 'tournamentId', 'createdBy', 'createdAt'])
+        && data.keys().hasOnly(['name', 'tournamentId', 'createdBy', 'createdAt'])
+        && data.name is string && data.name.size() >= 2 && data.name.size() <= 80
+        && data.name.matches('^[^\\r\\n]*\\S[^\\r\\n]*$')
+        && identifier(data.tournamentId);
+    }
+    function newTeamCount(tournamentId) {
+      let next = request.resource.data;
+      return next.diff(resource.data).affectedKeys().hasOnly(['teamCount', 'lastTeamId'])
+        && next.teamCount == resource.data.teamCount + 1
+        && identifier(next.lastTeamId)
+        && !exists(teamPath(next.lastTeamId))
+        && getAfter(teamPath(next.lastTeamId)).data.tournamentId == tournamentId
+        && author(getAfter(teamPath(next.lastTeamId)).data);
+    }
+    function validScore(score) { return score is int && score >= 0 && score <= 99; }
+    function scoresForStatus(data) {
+      return (data.status in ['scheduled', 'cancelled'] && data.homeScore == null && data.awayScore == null)
+        || (data.status in ['live', 'finished'] && validScore(data.homeScore) && validScore(data.awayScore));
+    }
+    function validMatch(data) {
+      return data.keys().hasAll(['tournamentId', 'homeTeamId', 'awayTeamId', 'courtId', 'startsAt', 'status', 'homeScore', 'awayScore', 'createdBy', 'createdAt'])
+        && data.keys().hasOnly(['tournamentId', 'homeTeamId', 'awayTeamId', 'courtId', 'startsAt', 'status', 'homeScore', 'awayScore', 'createdBy', 'createdAt', 'updatedBy', 'updatedAt'])
+        && identifier(data.tournamentId) && identifier(data.homeTeamId) && identifier(data.awayTeamId)
+        && data.homeTeamId != data.awayTeamId
+        && data.courtId is string && data.courtId.matches('^[a-z0-9-]{1,40}$')
+        && data.startsAt is timestamp && data.startsAt.toMillis() % 3600000 == 0
+        && data.status in ['scheduled', 'live', 'finished', 'cancelled']
+        && scoresForStatus(data);
+    }
+    function belongsToTournament(data) {
+      let tournament = get(tournamentPath(data.tournamentId)).data;
+      return get(teamPath(data.homeTeamId)).data.tournamentId == data.tournamentId
+        && get(teamPath(data.awayTeamId)).data.tournamentId == data.tournamentId
+        && data.startsAt >= tournament.startDate
+        && data.startsAt + duration.value(1, 'h') <= tournament.endDate + duration.value(1, 'd');
+    }
+    function courtSlot(data) { return 'court_' + data.courtId + '_' + string(data.startsAt.toMillis()); }
+    function teamSlot(teamId, data) { return 'team_' + teamId + '_' + string(data.startsAt.toMillis()); }
+    function hasReservation(reservationId, matchId) {
+      let reservation = getAfter(reservationPath(reservationId)).data;
+      return reservation.matchId == matchId && author(reservation);
+    }
+    function validReservationSlot(reservationId, matchId) {
+      let matchData = getAfter(matchPath(matchId)).data;
+      return author(matchData)
+        && (reservationId == courtSlot(matchData)
+          || reservationId == teamSlot(matchData.homeTeamId, matchData)
+          || reservationId == teamSlot(matchData.awayTeamId, matchData));
+    }
+    function validTransition(before, after) {
+      return (before == 'scheduled' && after in ['scheduled', 'live', 'finished', 'cancelled'])
+        || (before == 'live' && after in ['live', 'finished', 'cancelled'])
+        || (before == 'finished' && after == 'finished')
+        || (before == 'cancelled' && after == 'cancelled');
+    }
+    match /adminTournaments/{tournamentId} {
+      allow get: if isAdmin();
+      allow list: if isAdmin() && boundedList();
+      allow create: if isAdmin() && validTournament(request.resource.data)
+        && request.resource.data.teamCount == 0 && request.resource.data.lastTeamId == null
+        && author(request.resource.data);
+      allow update: if isAdmin() && validTournament(request.resource.data) && newTeamCount(tournamentId);
+      allow delete: if false;
+    }
+    match /adminTeams/{teamId} {
+      allow get: if isAdmin();
+      allow list: if isAdmin() && boundedList();
+      allow create: if isAdmin() && validTeam(request.resource.data) && author(request.resource.data)
+        && getAfter(tournamentPath(request.resource.data.tournamentId)).data.lastTeamId == teamId
+        && getAfter(tournamentPath(request.resource.data.tournamentId)).data.teamCount
+          == get(tournamentPath(request.resource.data.tournamentId)).data.teamCount + 1
+        && getAfter(tournamentPath(request.resource.data.tournamentId)).data.teamCount
+          <= getAfter(tournamentPath(request.resource.data.tournamentId)).data.maxTeams;
+      allow update, delete: if false;
+    }
+    match /adminMatches/{matchId} {
+      allow get: if isAdmin();
+      allow list: if isAdmin() && boundedList();
+      allow create: if isAdmin() && validMatch(request.resource.data) && author(request.resource.data)
+        && !request.resource.data.keys().hasAny(['updatedBy', 'updatedAt'])
+        && request.resource.data.status == 'scheduled' && belongsToTournament(request.resource.data)
+        && hasReservation(courtSlot(request.resource.data), matchId)
+        && hasReservation(teamSlot(request.resource.data.homeTeamId, request.resource.data), matchId)
+        && hasReservation(teamSlot(request.resource.data.awayTeamId, request.resource.data), matchId);
+      allow update: if isAdmin() && validMatch(request.resource.data)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'homeScore', 'awayScore', 'updatedBy', 'updatedAt'])
+        && request.resource.data.updatedBy == request.auth.uid && request.resource.data.updatedAt == request.time
+        && validTransition(resource.data.status, request.resource.data.status);
+      allow delete: if false;
+    }
+    match /adminReservations/{reservationId} {
+      allow get: if isAdmin();
+      allow list: if isAdmin() && boundedList();
+      allow create: if isAdmin()
+        && request.resource.data.keys().hasAll(['matchId', 'createdBy', 'createdAt'])
+        && request.resource.data.keys().hasOnly(['matchId', 'createdBy', 'createdAt'])
+        && identifier(request.resource.data.matchId) && author(request.resource.data)
+        && !exists(matchPath(request.resource.data.matchId))
+        && validReservationSlot(reservationId, request.resource.data.matchId);
+      allow update, delete: if false;
+    }
+    match /{document=**} { allow read, write: if false; }
+  }
+}

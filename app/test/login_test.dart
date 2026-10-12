@@ -103,7 +103,10 @@ void main() {
     expect(find.text('FUTSCHOOL ACADEMY'), findsOneWidget);
 
     await tester.enterText(find.byType(TextFormField).at(0), 'Juan Pérez');
-    await tester.enterText(find.byType(TextFormField).at(1), 'juan@ejemplo.edu');
+    await tester.enterText(
+      find.byType(TextFormField).at(1),
+      'juan@ejemplo.edu',
+    );
     await tester.enterText(find.byType(TextFormField).at(2), '123456');
     await tester.enterText(find.byType(TextFormField).at(3), '123456');
 
@@ -113,6 +116,11 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(auth.signUpCalls, 1);
-    expect(find.text('Cuenta creada con éxito. Te enviamos un correo de verificación. Revisa tu bandeja de entrada e inicia sesión.'), findsOneWidget);
+    expect(
+      find.text(
+        'Cuenta creada con éxito. Te enviamos un correo de verificación. Revisa tu bandeja de entrada e inicia sesión.',
+      ),
+      findsOneWidget,
+    );
   });
 }

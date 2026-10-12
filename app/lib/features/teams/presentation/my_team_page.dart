@@ -28,7 +28,12 @@ class _MyTeamPageState extends State<MyTeamPage> {
   final String captainName = 'Carlos Méndez';
 
   final List<Player> players = [
-    Player(id: '1', name: 'Carlos Méndez', position: 'Mediocampista', number: 10),
+    Player(
+      id: '1',
+      name: 'Carlos Méndez',
+      position: 'Mediocampista',
+      number: 10,
+    ),
     Player(id: '2', name: 'Andrés López', position: 'Delantero', number: 9),
     Player(id: '3', name: 'Luis Herrera', position: 'Extremo', number: 7),
     Player(id: '4', name: 'Diego Ramírez', position: 'Defensa', number: 3),
@@ -69,7 +74,7 @@ class _MyTeamPageState extends State<MyTeamPage> {
               decoration: BoxDecoration(
                 color: cardBackgroundColor,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: primaryGreen.withOpacity(0.3)),
+                border: Border.all(color: primaryGreen.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
@@ -98,10 +103,7 @@ class _MyTeamPageState extends State<MyTeamPage> {
                         const SizedBox(height: 4),
                         Text(
                           'Capitán: $captainName',
-                          style: const TextStyle(
-                            color: textGrey,
-                            fontSize: 14,
-                          ),
+                          style: const TextStyle(color: textGrey, fontSize: 14),
                         ),
                       ],
                     ),

@@ -48,11 +48,7 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: RegisterPage(auth: auth),
-        ),
-      );
+      await tester.pumpWidget(MaterialApp(home: RegisterPage(auth: auth)));
 
       expect(find.text('FutSchool'), findsOneWidget);
       expect(find.text('Regístrate para continuar'), findsOneWidget);
@@ -63,9 +59,7 @@ void main() {
       await tester.pumpWidget(
         MediaQuery(
           data: const MediaQueryData(textScaler: TextScaler.linear(2)),
-          child: MaterialApp(
-            home: RegisterPage(auth: auth),
-          ),
+          child: MaterialApp(home: RegisterPage(auth: auth)),
         ),
       );
       expect(tester.takeException(), isNull);
@@ -77,9 +71,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
-        home: Scaffold(
-          body: RegisterPage(auth: auth),
-        ),
+        home: Scaffold(body: RegisterPage(auth: auth)),
       ),
     );
 
@@ -94,10 +86,7 @@ void main() {
     expect(auth.signUpCalls, 0);
 
     // Llena los campos correctamente
-    await tester.enterText(
-      find.byType(TextFormField).at(0),
-      'María Belén',
-    );
+    await tester.enterText(find.byType(TextFormField).at(0), 'María Belén');
     await tester.enterText(
       find.byType(TextFormField).at(1),
       'belen@ejemplo.com',
