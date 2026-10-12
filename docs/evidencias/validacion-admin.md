@@ -21,8 +21,8 @@ abajo fueron ejecutadas el 9 de octubre; no se les atribuye una fecha nueva.
 | Detección de credenciales | Verificado parcialmente | 0 coincidencias de los patrones de claves privadas, tokens GitHub, refresh tokens y client secrets en archivos de texto versionables. |
 | Revisión cruzada del repositorio y reglas | Ejecutada | No se encontraron incompatibilidades materiales de campos o permisos. No equivale a certificación o auditoría completa. |
 | Dependencias Node | Revisadas, alertas residuales | `npm audit --json`: 0 críticas, 7 altas, 5 moderadas; 12 entradas de paquetes afectadas, incluyendo propagación transitiva. |
-| Proyecto Firebase real | Pendiente de comprobar | Firestore no confirmado; el claim no fue asignado por este trabajo. |
-| CI de GitHub y revisión del equipo | Pendiente de comprobar | Añadir o publicar el workflow no demuestra que se haya ejecutado o aprobado. |
+| Proyecto Firebase real | Comprobado parcialmente | Consola del 12 de octubre: base `(default)` Standard/nativa creada en `nam5`, reglas iniciales de denegación total. Claim y pruebas de extremo a extremo pendientes. |
+| CI de GitHub y revisión del equipo | Correcciones preparadas | PR 14 sigue en borrador. SonarQube identificó 2 hallazgos de seguridad y 4 de mantenimiento; corregidos en código, nuevo análisis remoto pendiente. |
 
 Herramientas de cliente: Flutter 3.47.5 y Dart 3.13.4. Herramientas del emulador:
 Node.js 24.13.0, Java 21 y Firebase CLI 15.33.0. Las versiones instalables quedan
@@ -55,6 +55,16 @@ revisar estas alertas, el alcance de los comandos necesarios y las correcciones
 disponibles. No se ejecutó un despliegue con estas herramientas.
 
 ## Alcance de las pruebas
+
+El 12 de octubre se repitió la suite de reglas tras `npm ci --ignore-scripts`:
+26 pruebas aprobadas, 0 fallidas. Se verificaron la sintaxis y `--help` del script
+de operador después de corregir los constructores de error y la copia de claims.
+No se ejecutó el script con credenciales ni se alteraron usuarios reales.
+
+Las acciones de `admin-validation.yml` quedaron fijadas a SHA completos obtenidos
+de los repositorios oficiales, y la instalación de npm desactiva scripts de ciclo
+de vida. Estos cambios corrigen los hallazgos de suministro de dependencias del
+análisis remoto, sin desactivar el Quality Gate ni excluir archivos del análisis.
 
 Las 35 pruebas Flutter incluyen 18 casos de validación administrativa, 4 de
 interfaz, 3 de control de acceso, 3 del servicio de registro y 7 de regresión del

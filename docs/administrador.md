@@ -39,6 +39,11 @@ Los campos de auditoría facilitan identificar quién cambió un resultado, pero
 
 Estado inicial conocido: Firestore no está confirmado como habilitado y el claim administrativo no ha sido asignado por este trabajo. No se ejecutó un despliegue remoto ni se modificó la cuenta solicitada.
 
+Actualización del 12 de octubre: se comprobó en la consola que la base `(default)`
+está creada en edición Standard, modo nativo y ubicación `nam5`. Las reglas
+publicadas todavía son la denegación total inicial. Falta publicar las reglas de
+este proyecto y asignar el claim desde un operador autorizado.
+
 El 12 de octubre de 2026 se confirmó conservar Cloud Firestore después de recibir
 un enlace de Realtime Database. Ese enlace pertenece a otro servicio y no se
 utiliza como URL de conexión de este módulo; la app usa el proyecto Firebase ya
@@ -50,7 +55,7 @@ configurado y su base Firestore predeterminada `(default)`.
 
    ```powershell
    cd tests/firestore
-   npm ci
+   npm ci --ignore-scripts
    npm test
    ```
 

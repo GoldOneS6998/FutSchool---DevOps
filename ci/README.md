@@ -5,6 +5,8 @@ las pruebas de Firestore. También permite ejecución manual. Comprueba formato,
 análisis, regresión Flutter y compilación web; en otro job ejecuta las reglas
 contra `demo-futschool-admin` en el emulador. Usa Node.js 24 y Java 21 para las
 herramientas actuales de Firebase. No utiliza secretos ni despliega a Firebase.
+Las acciones del incremento se fijan por SHA completo y npm se instala con
+`--ignore-scripts` para impedir scripts de ciclo de vida de dependencias.
 La auditoría de npm bloquea alertas críticas y muestra las demás; su alcance y
 los riesgos residuales de las herramientas están documentados en la evidencia.
 

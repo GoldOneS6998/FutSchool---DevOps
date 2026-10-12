@@ -32,13 +32,13 @@ async function main() {
   try {
     const auth = getAuth(app);
     const user = await auth.getUserByEmail(administratorEmail);
-    if (user.email !== administratorEmail) throw Object.assign(new Error(), { code: 'local/email-mismatch' });
-    if (user.disabled) throw Object.assign(new Error(), { code: 'local/account-disabled' });
+    if (user.email !== administratorEmail) throw Object.assign(new Error('Configured account email mismatch'), { code: 'local/email-mismatch' });
+    if (user.disabled) throw Object.assign(new Error('Configured account is disabled'), { code: 'local/account-disabled' });
     if (!args.has('--revoke') && !user.emailVerified) {
-      throw Object.assign(new Error(), { code: 'local/email-not-verified' });
+      throw Object.assign(new Error('Configured account email is not verified'), { code: 'local/email-not-verified' });
     }
     // Preserve unrelated existing claims. Never mark an email verified here.
-    const claims = { ...(user.customClaims || {}) };
+    const claims = { ...user.customClaims };
     if (args.has('--revoke')) delete claims.admin;
     else claims.admin = true;
     if (!args.has('--apply')) {
