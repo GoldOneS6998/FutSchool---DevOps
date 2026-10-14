@@ -11,6 +11,7 @@ de configuración y funcionamiento con cuentas reales.
 | Flutter, 13 de octubre | 66 pruebas pasaron, 0 fallaron | Login, formularios, roles, cambio directo de UID, privacidad, administración y capitán con dobles de repositorio |
 | Flutter, 14 de octubre | 67 pruebas pasaron, 0 fallaron | Incluye bloqueo seguro ante fallo de inicialización del perfil y recuperación al reintentar |
 | Análisis, 14 de octubre | `No issues found`, salida 0 | Revisión tras el ajuste de arranque del perfil |
+| Compilación, 14 de octubre | `Built build/web`, salida 0 | Cliente normal actualizado después del ajuste de carga del perfil |
 | Detección acotada de secretos, 14 de octubre | 0 coincidencias | Patrones de claves privadas, tokens GitHub y refresh tokens en archivos de texto versionables; no certifica ausencia de todo secreto |
 | Reglas Firestore, 13 de octubre | 45 pruebas pasaron, 0 fallaron; salida 0 | Emulador `demo-futschool-admin`: permisos, propiedad, suspensión, validación y transacciones |
 | Análisis, 13 de octubre | `No issues found`, salida 0 | Código Flutter integrado |
