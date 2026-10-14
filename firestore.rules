@@ -3,10 +3,30 @@ service cloud.firestore {
   match /databases/{database}/documents {
     function isAdmin() {
       return request.auth != null
-        && request.auth.token.admin == true
+        && request.auth.token.get('admin', false) == true
         && request.auth.token.email_verified == true;
     }
     function boundedList() { return request.query.limit != null && request.query.limit <= 200; }
+    function isVerified() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+    function profilePath(uid) { return /databases/$(database)/documents/captainProfiles/$(uid); }
+    function captainTeamPath(uid) { return /databases/$(database)/documents/captainTeams/$(uid); }
+    function registrationPath(id) { return /databases/$(database)/documents/tournamentRegistrations/$(id); }
+    function settingsPath() { return /databases/$(database)/documents/appSettings/general; }
+    function privacyPath() { return /databases/$(database)/documents/publicPrivacy/notice; }
+    function activeCaptain() {
+      return isVerified() && identifier(request.auth.uid) && exists(profilePath(request.auth.uid))
+        && get(profilePath(request.auth.uid)).data.disabled == false;
+    }
+    function sharedReader() { return isAdmin() || activeCaptain(); }
+    function singleLine(value, minimum, maximum) {
+      return value is string && value.size() >= minimum && value.size() <= maximum
+        && value.matches('^[^\\r\\n]*\\S[^\\r\\n]*$');
+    }
+    function updateAuthor(data) {
+      return data.updatedBy == request.auth.uid && data.updatedAt == request.time;
+    }
     function identifier(value) {
       return value is string && value.matches('^[a-zA-Z0-9_-]{1,128}$');
     }
@@ -19,7 +39,7 @@ service cloud.firestore {
     function reservationPath(id) { return /databases/$(database)/documents/adminReservations/$(id); }
     function validTournament(data) {
       return data.keys().hasAll(['name', 'description', 'startDate', 'endDate', 'maxTeams', 'teamCount', 'lastTeamId', 'createdBy', 'createdAt'])
-        && data.keys().hasOnly(['name', 'description', 'startDate', 'endDate', 'maxTeams', 'teamCount', 'lastTeamId', 'createdBy', 'createdAt'])
+        && data.keys().hasOnly(['name', 'description', 'startDate', 'endDate', 'maxTeams', 'teamCount', 'lastTeamId', 'createdBy', 'createdAt', 'updatedBy', 'updatedAt'])
         && data.name is string && data.name.size() >= 3 && data.name.size() <= 100
         && data.name.matches('^[^\\r\\n]*\\S[^\\r\\n]*$')
         && data.description is string && data.description.size() <= 2000
@@ -29,7 +49,7 @@ service cloud.firestore {
     }
     function validTeam(data) {
       return data.keys().hasAll(['name', 'tournamentId', 'createdBy', 'createdAt'])
-        && data.keys().hasOnly(['name', 'tournamentId', 'createdBy', 'createdAt'])
+        && data.keys().hasOnly(['name', 'tournamentId', 'createdBy', 'createdAt', 'captainUid', 'registrationId'])
         && data.name is string && data.name.size() >= 2 && data.name.size() <= 80
         && data.name.matches('^[^\\r\\n]*\\S[^\\r\\n]*$')
         && identifier(data.tournamentId);
@@ -42,6 +62,81 @@ service cloud.firestore {
         && !exists(teamPath(next.lastTeamId))
         && getAfter(teamPath(next.lastTeamId)).data.tournamentId == tournamentId
         && author(getAfter(teamPath(next.lastTeamId)).data);
+    }
+    function linkedRegistration(teamId, data) {
+      let old = get(registrationPath(data.registrationId)).data;
+      let next = getAfter(registrationPath(data.registrationId)).data;
+      return identifier(data.captainUid) && data.registrationId == teamId
+        && old.status == 'pending' && old.captainUid == data.captainUid
+        && old.tournamentId == data.tournamentId && old.teamName == data.name
+        && next.status == 'approved' && next.entrantId == teamId
+        && get(profilePath(data.captainUid)).data.disabled == false;
+    }
+    function validProfile(data) {
+      return data.keys().hasAll(['displayName', 'email', 'disabled', 'createdBy', 'createdAt', 'updatedBy', 'updatedAt'])
+        && data.keys().hasOnly(['displayName', 'email', 'disabled', 'createdBy', 'createdAt', 'updatedBy', 'updatedAt'])
+        && singleLine(data.displayName, 2, 100) && data.email is string && data.email.size() <= 254
+        && data.email.size() >= 3 && data.disabled is bool;
+    }
+    function validCaptainTeam(data) {
+      return data.keys().hasAll(['name', 'description', 'logoBase64', 'createdBy', 'createdAt', 'updatedBy', 'updatedAt'])
+        && data.keys().hasOnly(['name', 'description', 'logoBase64', 'createdBy', 'createdAt', 'updatedBy', 'updatedAt'])
+        && singleLine(data.name, 2, 80) && data.description is string && data.description.size() <= 1000
+        && (data.logoBase64 == null || (data.logoBase64 is string && data.logoBase64.size() <= 68268
+          && data.logoBase64.matches('^(iVBORw0KGgo|/9j/)[A-Za-z0-9+/]*={0,2}$')));
+    }
+    function validPlayer(playerId, data) {
+      return data.keys().hasAll(['name', 'position', 'jerseyNumber', 'createdBy', 'createdAt', 'updatedBy', 'updatedAt'])
+        && data.keys().hasOnly(['name', 'position', 'jerseyNumber', 'createdBy', 'createdAt', 'updatedBy', 'updatedAt'])
+        && singleLine(data.name, 2, 100) && data.position in ['goalkeeper', 'defender', 'midfielder', 'forward']
+        && data.jerseyNumber is int && data.jerseyNumber >= 0 && data.jerseyNumber <= 99
+        && playerId == string(data.jerseyNumber);
+    }
+    function validRegistration(data) {
+      return data.keys().hasAll(['tournamentId', 'captainUid', 'teamName', 'status', 'entrantId', 'reviewNote', 'createdBy', 'createdAt'])
+        && data.keys().hasOnly(['tournamentId', 'captainUid', 'teamName', 'status', 'entrantId', 'reviewNote', 'createdBy', 'createdAt', 'reviewedBy', 'reviewedAt'])
+        && identifier(data.tournamentId) && identifier(data.captainUid) && singleLine(data.teamName, 2, 80)
+        && data.status in ['pending', 'approved', 'rejected']
+        && data.reviewNote is string && data.reviewNote.size() <= 500;
+    }
+    function registrationsOpen(tournamentId) {
+      let tournament = get(tournamentPath(tournamentId)).data;
+      return (!exists(settingsPath()) || get(settingsPath()).data.registrationEnabled == true)
+        && tournament.teamCount < tournament.maxTeams
+        && request.time < tournament.endDate + duration.value(1, 'd');
+    }
+    function approvedRegistration(registrationId, data) {
+      let entrant = getAfter(teamPath(registrationId)).data;
+      let tournament = getAfter(tournamentPath(data.tournamentId)).data;
+      return !exists(teamPath(registrationId)) && data.entrantId == registrationId
+        && entrant.registrationId == registrationId && entrant.captainUid == data.captainUid
+        && entrant.name == data.teamName && entrant.tournamentId == data.tournamentId
+        && author(entrant) && get(profilePath(data.captainUid)).data.disabled == false
+        && tournament.lastTeamId == registrationId
+        && tournament.teamCount == get(tournamentPath(data.tournamentId)).data.teamCount + 1;
+    }
+    function validPrivacy(data) {
+      return data.keys().hasAll(['privacyResponsible', 'privacyContact', 'privacyNotice', 'privacyVersion'])
+        && data.keys().hasOnly(['privacyResponsible', 'privacyContact', 'privacyNotice', 'privacyVersion'])
+        && data.privacyResponsible is string && data.privacyResponsible.size() <= 200
+        && data.privacyContact is string && data.privacyContact.size() <= 200
+        && data.privacyNotice is string && data.privacyNotice.size() <= 10000
+        && data.privacyVersion is string && data.privacyVersion.size() <= 40;
+    }
+    function privacyMatchesSettings(privacy, settings) {
+      return privacy.privacyResponsible == settings.privacyResponsible
+        && privacy.privacyContact == settings.privacyContact
+        && privacy.privacyNotice == settings.privacyNotice
+        && privacy.privacyVersion == settings.privacyVersion;
+    }
+    function validSettings(data) {
+      return data.keys().hasAll(['registrationEnabled', 'announcement', 'privacyResponsible', 'privacyContact', 'privacyNotice', 'privacyVersion', 'updatedBy', 'updatedAt'])
+        && data.keys().hasOnly(['registrationEnabled', 'announcement', 'privacyResponsible', 'privacyContact', 'privacyNotice', 'privacyVersion', 'updatedBy', 'updatedAt'])
+        && data.registrationEnabled is bool && data.announcement is string && data.announcement.size() <= 1000
+        && data.privacyResponsible is string && data.privacyResponsible.size() <= 200
+        && data.privacyContact is string && data.privacyContact.size() <= 200
+        && data.privacyNotice is string && data.privacyNotice.size() <= 10000
+        && data.privacyVersion is string && data.privacyVersion.size() <= 40;
     }
     function validScore(score) { return score is int && score >= 0 && score <= 99; }
     function scoresForStatus(data) {
@@ -85,28 +180,34 @@ service cloud.firestore {
         || (before == 'cancelled' && after == 'cancelled');
     }
     match /adminTournaments/{tournamentId} {
-      allow get: if isAdmin();
-      allow list: if isAdmin() && boundedList();
+      allow get: if sharedReader();
+      allow list: if sharedReader() && boundedList();
       allow create: if isAdmin() && validTournament(request.resource.data)
+        && !request.resource.data.keys().hasAny(['updatedBy', 'updatedAt'])
         && request.resource.data.teamCount == 0 && request.resource.data.lastTeamId == null
         && author(request.resource.data);
-      allow update: if isAdmin() && validTournament(request.resource.data) && newTeamCount(tournamentId);
+      allow update: if isAdmin() && validTournament(request.resource.data)
+        && (newTeamCount(tournamentId)
+          || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'description', 'maxTeams', 'updatedBy', 'updatedAt'])
+            && updateAuthor(request.resource.data)));
       allow delete: if false;
     }
     match /adminTeams/{teamId} {
-      allow get: if isAdmin();
-      allow list: if isAdmin() && boundedList();
+      allow get: if sharedReader();
+      allow list: if sharedReader() && boundedList();
       allow create: if isAdmin() && validTeam(request.resource.data) && author(request.resource.data)
         && getAfter(tournamentPath(request.resource.data.tournamentId)).data.lastTeamId == teamId
         && getAfter(tournamentPath(request.resource.data.tournamentId)).data.teamCount
           == get(tournamentPath(request.resource.data.tournamentId)).data.teamCount + 1
         && getAfter(tournamentPath(request.resource.data.tournamentId)).data.teamCount
-          <= getAfter(tournamentPath(request.resource.data.tournamentId)).data.maxTeams;
+          <= getAfter(tournamentPath(request.resource.data.tournamentId)).data.maxTeams
+        && ((!request.resource.data.keys().hasAny(['captainUid', 'registrationId']))
+          || (request.resource.data.keys().hasAll(['captainUid', 'registrationId']) && linkedRegistration(teamId, request.resource.data)));
       allow update, delete: if false;
     }
     match /adminMatches/{matchId} {
-      allow get: if isAdmin();
-      allow list: if isAdmin() && boundedList();
+      allow get: if sharedReader();
+      allow list: if sharedReader() && boundedList();
       allow create: if isAdmin() && validMatch(request.resource.data) && author(request.resource.data)
         && !request.resource.data.keys().hasAny(['updatedBy', 'updatedAt'])
         && request.resource.data.status == 'scheduled' && belongsToTournament(request.resource.data)
@@ -129,6 +230,70 @@ service cloud.firestore {
         && !exists(matchPath(request.resource.data.matchId))
         && validReservationSlot(reservationId, request.resource.data.matchId);
       allow update, delete: if false;
+    }
+    match /captainProfiles/{uid} {
+      allow get: if isAdmin() || (isVerified() && uid == request.auth.uid);
+      allow list: if isAdmin() && boundedList();
+      allow create: if isVerified() && uid == request.auth.uid && validProfile(request.resource.data)
+        && request.resource.data.email == request.auth.token.email && request.resource.data.disabled == false
+        && author(request.resource.data) && updateAuthor(request.resource.data);
+      allow update: if validProfile(request.resource.data) && updateAuthor(request.resource.data)
+        && ((isAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['disabled', 'updatedBy', 'updatedAt']))
+          || (activeCaptain() && uid == request.auth.uid && request.resource.data.email == request.auth.token.email
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'email', 'updatedBy', 'updatedAt'])));
+      allow delete: if false;
+    }
+    match /captainTeams/{uid} {
+      allow get: if isAdmin() || (activeCaptain() && uid == request.auth.uid);
+      allow list: if isAdmin() && boundedList();
+      allow create: if activeCaptain() && uid == request.auth.uid && validCaptainTeam(request.resource.data)
+        && author(request.resource.data) && updateAuthor(request.resource.data);
+      allow update: if activeCaptain() && uid == request.auth.uid && validCaptainTeam(request.resource.data)
+        && updateAuthor(request.resource.data)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'description', 'logoBase64', 'updatedBy', 'updatedAt']);
+      allow delete: if false;
+      match /players/{playerId} {
+        allow get: if isAdmin() || (activeCaptain() && uid == request.auth.uid);
+        allow list: if boundedList() && (isAdmin() || (activeCaptain() && uid == request.auth.uid));
+        allow create: if activeCaptain() && uid == request.auth.uid && exists(captainTeamPath(uid))
+          && validPlayer(playerId, request.resource.data) && author(request.resource.data) && updateAuthor(request.resource.data);
+        allow update: if activeCaptain() && uid == request.auth.uid && validPlayer(playerId, request.resource.data)
+          && updateAuthor(request.resource.data)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'position', 'updatedBy', 'updatedAt']);
+        allow delete: if activeCaptain() && uid == request.auth.uid;
+      }
+    }
+    match /tournamentRegistrations/{registrationId} {
+      allow get: if isAdmin() || (activeCaptain() && ((!exists(registrationPath(registrationId))
+        && registrationId.matches('^[a-zA-Z0-9_-]{1,128}__' + request.auth.uid + '$'))
+        || resource.data.captainUid == request.auth.uid));
+      allow list: if boundedList() && (isAdmin() || (activeCaptain() && resource.data.captainUid == request.auth.uid));
+      allow create: if activeCaptain() && validRegistration(request.resource.data)
+        && identifier(registrationId) && registrationId == request.resource.data.tournamentId + '__' + request.auth.uid
+        && request.resource.data.captainUid == request.auth.uid && author(request.resource.data)
+        && request.resource.data.teamName == get(captainTeamPath(request.auth.uid)).data.name
+        && request.resource.data.status == 'pending' && request.resource.data.entrantId == null
+        && request.resource.data.reviewNote == '' && !request.resource.data.keys().hasAny(['reviewedBy', 'reviewedAt'])
+        && registrationsOpen(request.resource.data.tournamentId);
+      allow update: if isAdmin() && validRegistration(request.resource.data) && resource.data.status == 'pending'
+        && request.resource.data.reviewedBy == request.auth.uid && request.resource.data.reviewedAt == request.time
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'entrantId', 'reviewNote', 'reviewedBy', 'reviewedAt'])
+        && ((request.resource.data.status == 'rejected' && request.resource.data.entrantId == null)
+          || (request.resource.data.status == 'approved' && approvedRegistration(registrationId, request.resource.data)));
+      allow delete: if false;
+    }
+    match /appSettings/{settingsId} {
+      allow get: if settingsId == 'general' && sharedReader();
+      allow list, delete: if false;
+      allow create, update: if settingsId == 'general' && isAdmin() && validSettings(request.resource.data)
+        && updateAuthor(request.resource.data)
+        && privacyMatchesSettings(getAfter(privacyPath()).data, request.resource.data);
+    }
+    match /publicPrivacy/{noticeId} {
+      allow get: if noticeId == 'notice';
+      allow list, delete: if false;
+      allow create, update: if noticeId == 'notice' && isAdmin() && validPrivacy(request.resource.data)
+        && privacyMatchesSettings(request.resource.data, getAfter(settingsPath()).data);
     }
     match /{document=**} { allow read, write: if false; }
   }

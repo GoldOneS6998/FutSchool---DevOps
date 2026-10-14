@@ -1,6 +1,6 @@
 # Product Backlog
 
-Fecha de actualización: 2026-10-09. Priorización propuesta, pendiente de acuerdo
+Fecha de actualización: 2026-10-13. Priorización propuesta, pendiente de acuerdo
 del equipo. P1: siguiente entrega; P2: después del acceso; P3: ampliación.
 Estimaciones y responsables pendientes; no se inventan puntos ni compromisos.
 
@@ -8,23 +8,25 @@ Estimaciones y responsables pendientes; no se inventan puntos ni compromisos.
 | --- | --- | --- | --- |
 | HU-03 | Como usuario registrado quiero acceder con correo y contraseña para consultar torneos | P1 | Implementada, revisión y validación real pendientes |
 | AUTH-GOOGLE | Como usuario quiero acceder con Google para usar mi cuenta existente | P1 | Implementada, certificado y validación pendientes |
-| HU-01 | Como usuario quiero navegar al inicio para encontrar las funciones principales | P2 | Navegación de alumnado conservada y acceso administrativo implementado; integración real pendiente |
+| HU-01 | Como usuario quiero navegar al inicio para encontrar las funciones principales | P2 | Inicio de capitán y administrador conectados; activación real pendiente |
 | HU-02 | Como estudiante quiero crear una cuenta para acceder al sistema | P2 | Registro existente conservado, regresión local verificada; validación real pendiente |
-| HU-04 | Como administrador quiero funciones autorizadas para gestionar el sistema | P2 | Torneos, equipos y partidos implementados; gestión de cuentas y configuración institucional pendientes |
+| HU-04 | Como administrador quiero funciones autorizadas para gestionar el sistema | P2 | Gestión de perfiles, suspensión de acceso a FutSchool, equipos, solicitudes y configuración implementadas |
 | HU-05 | Como administrador quiero crear torneos para organizarlos | P2 | Implementada y validada localmente; Firestore y claim reales pendientes |
-| HU-06 | Como usuario quiero consultar torneos y su detalle | P2 | Vista existente con datos de ejemplo; conexión del alumnado a Firestore pendiente |
-| HU-07 | Como capitán quiero registrar mi equipo | P2 | Backlog |
-| HU-08 | Como capitán quiero agregar y editar jugadores | P2 | Backlog |
-| HU-09 | Como capitán quiero solicitar inscripción a un torneo | P2 | Backlog |
-| HU-10 | Como administrador quiero registrar partidos de equipos inscritos | P2 | Agenda y resultados de equipos registrados por admin implementados; flujo público de inscripción pendiente |
-| AUTH-RESET | Como usuario quiero recuperar mi contraseña | P3 | Propuesta a refinar |
+| HU-06 | Como usuario quiero consultar torneos y su detalle | P2 | Firestore, filtros, participantes, calendario y posiciones implementados |
+| HU-07 | Como capitán quiero registrar mi equipo | P2 | Equipo propio y escudo acotado implementados |
+| HU-08 | Como capitán quiero agregar y editar jugadores | P2 | Alta, edición y eliminación de integrantes propios implementadas |
+| HU-09 | Como capitán quiero solicitar inscripción a un torneo | P2 | Solicitud única y revisión administrativa atómica implementadas |
+| HU-10 | Como administrador quiero registrar partidos de equipos inscritos | P2 | Agenda, reservas y resultados integrados con participantes aprobados |
+| AUTH-RESET | Como usuario quiero recuperar mi contraseña | P3 | Recuperación y verificación implementadas; envío real pendiente |
 | WEB-PREVIEW | Como propietario quiero probar desde el navegador de mi teléfono | P3 | Configuración web incorporada; enlace externo y acceso real pendientes |
 
 Los identificadores HU provienen del alcance previo. Google y vista web son
 pedidos posteriores del propietario.
 
-El incremento actual de administración y sus criterios detallados están en
-[Sprint 02](sprint-02-administrador.md). Implementado y verificado localmente no
+El incremento actual y sus criterios están en [Sprint 03](sprint-03-roles.md),
+con [evidencia de ejecución](../evidencias/validacion-roles.md).
+El [Sprint 02](sprint-02-administrador.md) conserva el alcance anterior.
+Implementado y verificado localmente no
 significan publicado, aprobado por el equipo o comprobado con Firebase real.
 
 ## Seguimiento en GitHub

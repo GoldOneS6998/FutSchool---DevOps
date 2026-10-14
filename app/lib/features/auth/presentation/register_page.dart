@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 
 import '../domain/auth_service.dart';
+import '../../privacy/domain/privacy_repository.dart';
+import '../../privacy/presentation/privacy_page.dart';
 
 class RegisterPage extends StatefulWidget {
-  const RegisterPage({super.key, this.auth});
+  const RegisterPage({super.key, this.auth, this.privacy});
   final AuthService? auth;
+  final PrivacyRepository? privacy;
 
   @override
   State<RegisterPage> createState() => _RegisterPageState();
@@ -211,6 +214,11 @@ class _RegisterPageState extends State<RegisterPage> {
                                 if (value == null || value.trim().isEmpty) {
                                   return 'Introduce tu nombre completo.';
                                 }
+                                if (value.trim().length > 100 ||
+                                    RegExp(r'[\x00-\x1F\x7F]')
+                                        .hasMatch(value)) {
+                                  return 'Escribe un nombre de hasta 100 caracteres sin caracteres de control.';
+                                }
                                 return null;
                               },
                             ),
@@ -240,8 +248,9 @@ class _RegisterPageState extends State<RegisterPage> {
                                 if (value == null || value.trim().isEmpty) {
                                   return 'Introduce tu correo.';
                                 }
-                                if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
-                                    .hasMatch(value.trim())) {
+                                if (value.trim().length > 254 ||
+                                    !RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
+                                        .hasMatch(value.trim())) {
                                   return 'Introduce un correo válido.';
                                 }
                                 return null;
@@ -386,6 +395,22 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                       const SizedBox(height: 12),
 
+                      if (widget.privacy != null)
+                        TextButton(
+                          onPressed: _busy
+                              ? null
+                              : () => Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                    builder: (_) => PrivacyPage(
+                                      repository: widget.privacy!,
+                                    ),
+                                  ),
+                                ),
+                          child: const Text(
+                            'Aviso de privacidad',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
                       // Botón Ya tienes cuenta? Iniciar Sesión
                       SizedBox(
                         width: double.infinity,

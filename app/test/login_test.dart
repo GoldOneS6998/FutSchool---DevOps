@@ -38,6 +38,7 @@ class TestAuth implements AuthService {
 }
 
 void main() {
+  WidgetController.hitTestWarningShouldBeFatal = true;
   late TestAuth auth;
   setUp(() => auth = TestAuth());
   tearDown(() => auth.sessions.close());
@@ -48,10 +49,17 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  Future<void> submit(WidgetTester tester) async {
+    final button = find.widgetWithText(FilledButton, 'Iniciar sesión');
+    await tester.ensureVisible(button);
+    await tester.pumpAndSettle();
+    await tester.tap(button);
+    await tester.pumpAndSettle();
+  }
+
   testWidgets('Valida campos sin enviar credenciales vacías', (tester) async {
     await open(tester);
-    await tester.tap(find.widgetWithText(FilledButton, 'Iniciar sesión'));
-    await tester.pumpAndSettle();
+    await submit(tester);
     expect(find.text('Introduce tu correo.'), findsOneWidget);
     expect(find.text('Introduce tu contraseña.'), findsOneWidget);
     expect(auth.passwordCalls, 0);
@@ -67,13 +75,11 @@ void main() {
       'alumno@example.com',
     );
     await tester.enterText(find.byType(TextFormField).last, 'incorrecta');
-    await tester.tap(find.widgetWithText(FilledButton, 'Iniciar sesión'));
-    await tester.pumpAndSettle();
+    await submit(tester);
     expect(find.text('Correo o contraseña incorrectos.'), findsOneWidget);
     expect(auth.passwordCalls, 1);
     auth.fail = false;
-    await tester.tap(find.widgetWithText(FilledButton, 'Iniciar sesión'));
-    await tester.pumpAndSettle();
+    await submit(tester);
     expect(find.text('Torneos escolares'), findsOneWidget);
   });
 

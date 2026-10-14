@@ -6,7 +6,11 @@ El módulo permite al administrador crear torneos, registrar equipos, programar 
 
 La cuenta solicitada es `ernex9897@gmail.com`. El correo identifica la cuenta que el operador asignará; **no constituye una lista de permisos en el cliente**. Solo un ID token firmado por Firebase que incluya `admin: true` y `email_verified: true` permite acceder a las colecciones administrativas. Una persona no obtiene permisos al escribir `admin` en un formulario o documento. La aplicación nunca incluye Firebase Admin SDK ni credenciales de servidor.
 
-El alcance inicial no incluye dar de alta usuarios de Authentication desde la app, editar sus contraseñas, asignar roles desde el navegador, inscripciones públicas, listados nominales de integrantes, liberación automática de reservas canceladas ni eliminación de torneos. Esas operaciones requieren diseño y pruebas adicionales; no se presentan como funciones terminadas.
+La ampliación del 13 de octubre incorpora inscripciones de capitanes verificados,
+consulta privada de integrantes, gestión del acceso de capitanes y configuración
+institucional: ver [login y ambos roles](roles-y-capitanes.md). Siguen fuera del
+alcance crear usuarios de Authentication desde el panel, editar sus contraseñas,
+asignar roles desde el navegador, liberar reservas canceladas y eliminar torneos.
 
 ## Datos y validación
 
@@ -29,7 +33,16 @@ Los estados son `scheduled`, `live`, `finished` y `cancelled`. Desde programado 
 
 ## Controles de acceso
 
-`firestore.rules` aplica las mismas comprobaciones independientemente de la pantalla o herramienta utilizada. Un usuario anónimo, regular o administrador sin correo verificado no puede leer ni escribir estos datos. Un administrador puede gestionar todos los recursos administrativos: ese alcance es deliberado, no una comprobación de propiedad por estudiante. Las listas deben solicitar un límite de hasta 200 documentos. No hay permiso general para otras colecciones, actualizaciones de equipos, borrado de recursos ni reescritura de reservas.
+`firestore.rules` aplica comprobaciones independientemente de la pantalla o herramienta.
+La versión anterior publicada el 12 de octubre permite estos datos solo a admin.
+La ampliación local del 13 de octubre permite al capitán verificado y activo
+consultar competición compartida y gestionar su propio equipo. Perfiles, escudos
+e integrantes privados no se abren a otros capitanes. El documento fijo de aviso
+de privacidad es público; los demás datos no admiten lectura anónima. El admin
+gestiona recursos administrativos y consulta integrantes. Las listas están
+limitadas a 200, los equipos inscritos y reservas siguen inmutables y no se
+permite eliminar torneos/partidos. Ver detalle de las nuevas rutas y permisos en
+[ambos roles](roles-y-capitanes.md).
 
 Las operaciones administrativas vuelven a comprobar el claim; una validación de interfaz es solo una ayuda de navegación. Firebase administra contraseñas y tokens mediante sus SDK: no se almacenan contraseñas, secretos JWT ni claves privadas en Firestore, código, capturas de pruebas o logs. La configuración pública de una app Firebase no sustituye las reglas ni es una credencial de servidor.
 
@@ -37,12 +50,14 @@ Los campos de auditoría facilitan identificar quién cambió un resultado, pero
 
 ## Habilitar Firestore y asignar al administrador
 
-Estado inicial conocido: Firestore no está confirmado como habilitado y el claim administrativo no ha sido asignado por este trabajo. No se ejecutó un despliegue remoto ni se modificó la cuenta solicitada.
+Estado al 9 de octubre: Firestore no estaba confirmado como habilitado y el claim
+administrativo no había sido asignado por este trabajo.
 
 Actualización del 12 de octubre: se comprobó en la consola que la base `(default)`
-está creada en edición Standard, modo nativo y ubicación `nam5`. Las reglas
-publicadas todavía son la denegación total inicial. Falta publicar las reglas de
-este proyecto y asignar el claim desde un operador autorizado.
+está creada en edición Standard, modo nativo y ubicación `nam5`. Con autorización
+expresa del propietario se publicaron las 135 líneas de `firestore.rules` por la
+consola y se comprobó su nueva versión activa. Falta asignar el claim desde un
+operador autorizado y comprobar la integración con sesiones reales.
 
 El 12 de octubre de 2026 se confirmó conservar Cloud Firestore después de recibir
 un enlace de Realtime Database. Ese enlace pertenece a otro servicio y no se

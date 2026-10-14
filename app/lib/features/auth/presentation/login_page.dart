@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
+import '../../../shared/widgets/auth_surface.dart';
 import '../domain/auth_service.dart';
+import '../domain/account_access.dart';
 import 'register_page.dart';
+import 'recovery_page.dart';
+import '../../privacy/domain/privacy_repository.dart';
+import '../../privacy/presentation/privacy_page.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key, this.auth});
+  const LoginPage({super.key, this.auth, this.privacy});
   final AuthService? auth;
-
+  final PrivacyRepository? privacy;
   @override
   State<LoginPage> createState() => _LoginPageState();
 }
@@ -53,64 +59,50 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final enabled = widget.auth != null && !_busy;
-    return Scaffold(
-      backgroundColor: const Color(0xFFF3F7F5),
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
-              child: Form(
-                key: _form,
+    return AuthSurface(
+      child: Form(
+        key: _form,
+        child: AutofillGroup(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const AcademyLogo(),
+              const SizedBox(height: 20),
+              const Text(
+                'FutSchool',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 40,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'Inicia sesión para continuar',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: futText, fontSize: 16),
+              ),
+              const SizedBox(height: 32),
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: futCard,
+                  border: Border.all(color: futGreen),
+                  borderRadius: BorderRadius.circular(24),
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Center(
-                      child: Container(
-                        width: 72,
-                        height: 72,
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primary,
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                              color: theme.colorScheme.primary.withValues(
-                                alpha: 0.25,
-                              ),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.sports_soccer,
-                          size: 42,
-                          color: Colors.white,
-                        ),
+                    const Text(
+                      'Correo electrónico',
+                      style: TextStyle(
+                        color: futText,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'FutSchool',
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.headlineLarge,
-                    ),
                     const SizedBox(height: 8),
-                    const Text(
-                      'Tu próximo partido empieza aquí.',
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 36),
-                    Text(
-                      'Iniciar sesión',
-                      style: theme.textTheme.headlineSmall,
-                    ),
-                    const SizedBox(height: 8),
-                    const Text('Accede para consultar tus torneos escolares.'),
-                    const SizedBox(height: 24),
                     TextFormField(
                       controller: _email,
                       enabled: !_busy,
@@ -119,22 +111,29 @@ class _LoginPageState extends State<LoginPage> {
                       autofillHints: const [AutofillHints.username],
                       autocorrect: false,
                       decoration: const InputDecoration(
-                        labelText: 'Correo electrónico',
-                        prefixIcon: Icon(Icons.mail_outline),
-                        border: OutlineInputBorder(),
+                        hintText: 'nombre@ejemplo.com',
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
                           return 'Introduce tu correo.';
                         }
-                        if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
-                            .hasMatch(value.trim())) {
+                        if (value.trim().length > 254 ||
+                            !RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
+                                .hasMatch(value.trim())) {
                           return 'Introduce un correo válido.';
                         }
                         return null;
                       },
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Contraseña',
+                      style: TextStyle(
+                        color: futText,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
                     TextFormField(
                       controller: _password,
                       enabled: !_busy,
@@ -145,9 +144,7 @@ class _LoginPageState extends State<LoginPage> {
                       textInputAction: TextInputAction.done,
                       onFieldSubmitted: (_) => _submit(),
                       decoration: InputDecoration(
-                        labelText: 'Contraseña',
-                        prefixIcon: const Icon(Icons.lock_outline),
-                        border: const OutlineInputBorder(),
+                        hintText: '••••••••',
                         suffixIcon: IconButton(
                           tooltip: _obscure
                               ? 'Mostrar contraseña'
@@ -155,82 +152,103 @@ class _LoginPageState extends State<LoginPage> {
                           onPressed: _busy
                               ? null
                               : () => setState(() => _obscure = !_obscure),
-                          icon: Icon(
-                            _obscure
-                                ? Icons.visibility_outlined
-                                : Icons.visibility_off_outlined,
-                          ),
+                          icon: _obscure
+                              ? SvgPicture.asset('assets/figma/auth/eye.svg')
+                              : const Icon(
+                                  Icons.visibility_off_outlined,
+                                  size: 20,
+                                ),
                         ),
                       ),
                       validator: (value) => value == null || value.isEmpty
                           ? 'Introduce tu contraseña.'
                           : null,
                     ),
-                    if (_error != null) ...[
-                      const SizedBox(height: 16),
-                      Semantics(
-                        liveRegion: true,
-                        child: Text(
-                          _error!,
-                          style: TextStyle(color: theme.colorScheme.error),
-                        ),
-                      ),
-                    ],
-                    if (widget.auth == null) ...[
-                      const SizedBox(height: 16),
-                      const Text(
-                        'El acceso estará disponible al conectar Firebase.',
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                    const SizedBox(height: 24),
-                    FilledButton(
-                      onPressed: enabled ? () => _submit() : null,
-                      child: const Text('Iniciar sesión'),
-                    ),
-                    const SizedBox(height: 16),
-                    const Text('o', textAlign: TextAlign.center),
-                    const SizedBox(height: 16),
-                    OutlinedButton(
-                      onPressed: enabled ? () => _submit(google: true) : null,
-                      child: const Text('Continuar con Google'),
-                    ),
-                    const SizedBox(height: 16),
-                    Wrap(
-                      alignment: WrapAlignment.center,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        const Text('¿No tienes cuenta?'),
-                        TextButton(
+                    if (widget.auth case final AccountAccess account) ...[
+                      const SizedBox(height: 12),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
                           onPressed: _busy
                               ? null
-                              : () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          RegisterPage(auth: widget.auth),
+                              : () => Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                    builder: (_) => RecoveryPage(
+                                      account: account,
+                                      email: _email.text.trim(),
                                     ),
-                                  );
-                                },
+                                  ),
+                                ),
                           child: const Text(
-                            'Regístrate aquí',
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                            '¿Olvidaste tu contraseña?',
+                            style: TextStyle(color: futGreen),
                           ),
-                        ),
-                      ],
-                    ),
-                    if (_busy) ...[
-                      const SizedBox(height: 16),
-                      const Center(
-                        child: CircularProgressIndicator(
-                          semanticsLabel: 'Iniciando sesión',
                         ),
                       ),
                     ],
                   ],
                 ),
               ),
-            ),
+              if (_error != null) ...[
+                const SizedBox(height: 16),
+                Semantics(
+                  liveRegion: true,
+                  child: Text(
+                    _error!,
+                    style: const TextStyle(color: Color(0xFFFCA5A5)),
+                  ),
+                ),
+              ],
+              if (widget.auth == null) ...[
+                const SizedBox(height: 16),
+                const Text(
+                  'El acceso estará disponible al conectar Firebase.',
+                  textAlign: TextAlign.center,
+                ),
+              ],
+              const SizedBox(height: 24),
+              FilledButton(
+                onPressed: enabled ? () => _submit() : null,
+                child: Text(_busy ? 'Conectando…' : 'Iniciar sesión'),
+              ),
+              const SizedBox(height: 12),
+              OutlinedButton(
+                onPressed: enabled ? () => _submit(google: true) : null,
+                child: const Text('Continuar con Google'),
+              ),
+              const SizedBox(height: 12),
+              TextButton(
+                onPressed: _busy
+                    ? null
+                    : () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => RegisterPage(
+                            auth: widget.auth,
+                            privacy: widget.privacy,
+                          ),
+                        ),
+                      ),
+                child: const Text(
+                  'Regístrate aquí',
+                  style: TextStyle(color: futText, fontWeight: FontWeight.w600),
+                ),
+              ),
+              if (widget.privacy != null)
+                TextButton(
+                  onPressed: _busy
+                      ? null
+                      : () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) =>
+                                PrivacyPage(repository: widget.privacy!),
+                          ),
+                        ),
+                  child: const Text(
+                    'Aviso de privacidad',
+                    style: TextStyle(color: futText),
+                  ),
+                ),
+            ],
           ),
         ),
       ),

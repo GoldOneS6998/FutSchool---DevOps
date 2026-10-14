@@ -4,7 +4,9 @@ const { test, before, after, beforeEach } = require('node:test');
 const fs = require('node:fs');
 const path = require('node:path');
 const { initializeTestEnvironment, assertFails, assertSucceeds } = require('@firebase/rules-unit-testing');
-const { doc, collection, query, limit, getDoc, getDocs, setDoc, updateDoc, deleteDoc, writeBatch, serverTimestamp, Timestamp } = require('firebase/firestore');
+const { doc, collection, query, where, limit, getDoc, getDocs, setDoc, updateDoc, deleteDoc, writeBatch, serverTimestamp, Timestamp, setLogLevel } = require('firebase/firestore');
+// Expected permission denials are asserted below; retain the test runner's failure details.
+setLogLevel('silent');
 
 // A demo project and an explicit loopback endpoint prevent a production run.
 const emulatorEndpoint = process.env.FIRESTORE_EMULATOR_HOST;
@@ -61,6 +63,14 @@ async function seed() {
     await setDoc(ref(db, 'adminTeams', 'teamOther'), {
       name: 'Otro torneo', tournamentId: 'otherCup', createdBy: adminUid, createdAt: serverTimestamp(),
     });
+    await setDoc(ref(db, 'adminTournaments', 'registrationCup'), tournament({
+      startDate: Timestamp.fromMillis(Date.now() + 86400000), endDate: Timestamp.fromMillis(Date.now() + 86400000 * 30),
+    }));
+    for (const uid of ['captainA', 'captainB']) {
+      await setDoc(ref(db, 'captainProfiles', uid), profile(uid));
+      await setDoc(ref(db, 'captainTeams', uid), captainTeam(uid));
+      await setDoc(doc(db, 'captainTeams', uid, 'players', '7'), player(uid));
+    }
   });
 }
 before(async () => {
@@ -214,4 +224,227 @@ test('colecciones no declaradas y borrado de recursos se deniegan por defecto', 
   await assertFails(setDoc(ref(db, 'privateProfiles', 'other'), { name: 'privado' }));
   await assertFails(deleteDoc(ref(db, 'adminTournaments', 'cup')));
   await assertFails(deleteDoc(ref(db, 'adminTeams', 'teamA')));
+});
+
+// Captains own their private roster; shared competition data remains admin writable.
+const captainDb = (uid = 'captainA', verified = true) => env.authenticatedContext(uid,
+  { email_verified: verified, email: `${uid}@example.test` }).firestore();
+function audit(uid) { return { createdBy: uid, createdAt: serverTimestamp(), updatedBy: uid, updatedAt: serverTimestamp() }; }
+function profile(uid, extra = {}) { return { displayName: `Capitán ${uid}`, email: `${uid}@example.test`, disabled: false, ...audit(uid), ...extra }; }
+function captainTeam(uid, extra = {}) { return { name: `Equipo ${uid}`, description: '', logoBase64: null, ...audit(uid), ...extra }; }
+function player(uid, extra = {}) { return { name: 'Jugador universitario', position: 'forward', jerseyNumber: 7, ...audit(uid), ...extra }; }
+function registration(uid = 'captainA', extra = {}) {
+  return { tournamentId: 'registrationCup', captainUid: uid, teamName: `Equipo ${uid}`, status: 'pending',
+    entrantId: null, reviewNote: '', createdBy: uid, createdAt: serverTimestamp(), ...extra };
+}
+const registrationId = (uid = 'captainA') => `registrationCup__${uid}`;
+function approveBatch(db, uid = 'captainA', count = 1, extra = {}) {
+  const id = registrationId(uid);
+  const batch = writeBatch(db);
+  batch.set(ref(db, 'adminTeams', id), { name: `Equipo ${uid}`, tournamentId: 'registrationCup', captainUid: uid,
+    registrationId: id, createdBy: adminUid, createdAt: serverTimestamp(), ...extra });
+  batch.update(ref(db, 'adminTournaments', 'registrationCup'), { teamCount: count, lastTeamId: id });
+  batch.update(ref(db, 'tournamentRegistrations', id), { status: 'approved', entrantId: id, reviewNote: '', reviewedBy: adminUid, reviewedAt: serverTimestamp() });
+  return batch;
+}
+function privacy(extra = {}) { return { privacyResponsible: '', privacyContact: '', privacyNotice: '', privacyVersion: '', ...extra }; }
+function settingsBatch(db, extra = {}, privacyExtra = {}) {
+  const batch = writeBatch(db);
+  const p = privacy(privacyExtra);
+  batch.set(ref(db, 'publicPrivacy', 'notice'), p);
+  batch.set(ref(db, 'appSettings', 'general'), { registrationEnabled: true, announcement: '', ...p, updatedBy: adminUid, updatedAt: serverTimestamp(), ...extra });
+  return batch;
+}
+
+test('capitán crea su perfil con correo del token y sin privilegios', async () => {
+  const db = captainDb('newCaptain');
+  await assertSucceeds(setDoc(ref(db, 'captainProfiles', 'newCaptain'), profile('newCaptain')));
+  await assertFails(setDoc(ref(db, 'captainProfiles', 'other'), profile('newCaptain')));
+  await assertFails(setDoc(ref(captainDb('forged'), 'captainProfiles', 'forged'), profile('forged', { admin: true })));
+  await assertFails(setDoc(ref(captainDb('wrongEmail'), 'captainProfiles', 'wrongEmail'), profile('wrongEmail', { email: 'another@example.test' })));
+});
+test('correo sin verificar y sesión ausente no crean perfil ni consultan datos compartidos', async () => {
+  for (const db of [captainDb('newCaptain', false), env.unauthenticatedContext().firestore()]) {
+    await assertFails(setDoc(ref(db, 'captainProfiles', 'newCaptain'), profile('newCaptain')));
+    await assertFails(getDoc(ref(db, 'adminTournaments', 'registrationCup')));
+  }
+});
+test('perfil activo permite consultar torneos, equipos y partidos compartidos con límite', async () => {
+  const db = captainDb();
+  for (const name of ['adminTournaments', 'adminTeams', 'adminMatches']) {
+    await assertSucceeds(getDocs(query(collection(db, name), limit(200))));
+    await assertFails(getDocs(collection(db, name)));
+  }
+  await assertFails(getDoc(ref(db, 'adminReservations', 'any')));
+});
+test('un capitán no puede leer perfiles, equipos privados ni jugadores de otro', async () => {
+  const db = captainDb();
+  await assertSucceeds(getDoc(ref(db, 'captainProfiles', 'captainA')));
+  await assertSucceeds(getDoc(ref(db, 'captainTeams', 'captainA')));
+  await assertSucceeds(getDoc(doc(db, 'captainTeams', 'captainA', 'players', '7')));
+  await assertFails(getDoc(ref(db, 'captainProfiles', 'captainB')));
+  await assertFails(getDoc(ref(db, 'captainTeams', 'captainB')));
+  await assertFails(getDoc(doc(db, 'captainTeams', 'captainB', 'players', '7')));
+  await assertFails(getDocs(query(collection(db, 'captainProfiles'), limit(200))));
+  await assertFails(getDocs(query(collection(db, 'captainTeams'), limit(200))));
+});
+test('capitán edita su perfil pero no se concede privilegios ni altera suspensión', async () => {
+  const db = captainDb();
+  const refA = ref(db, 'captainProfiles', 'captainA');
+  const meta = { updatedBy: 'captainA', updatedAt: serverTimestamp() };
+  await assertSucceeds(updateDoc(refA, { displayName: 'Nombre actualizado', ...meta }));
+  await assertFails(updateDoc(refA, { disabled: true, ...meta }));
+  await assertFails(updateDoc(refA, { email: 'other@example.test', ...meta }));
+  await assertFails(updateDoc(refA, { role: 'admin', ...meta }));
+  await assertFails(updateDoc(ref(db, 'captainProfiles', 'captainB'), { displayName: 'Intruso', ...meta }));
+});
+test('administrador suspende y reactiva; suspendido no lee ni escribe equipo ni datos compartidos', async () => {
+  const admin = adminDb();
+  const db = captainDb();
+  const meta = { updatedBy: adminUid, updatedAt: serverTimestamp() };
+  await assertSucceeds(updateDoc(ref(admin, 'captainProfiles', 'captainA'), { disabled: true, ...meta }));
+  await assertSucceeds(getDoc(ref(db, 'captainProfiles', 'captainA')));
+  await assertFails(getDoc(ref(db, 'captainTeams', 'captainA')));
+  await assertFails(getDoc(ref(db, 'adminTournaments', 'cup')));
+  await assertFails(updateDoc(ref(db, 'captainProfiles', 'captainA'), { disabled: false, updatedBy: 'captainA', updatedAt: serverTimestamp() }));
+  await assertFails(updateDoc(ref(db, 'captainTeams', 'captainA'), { name: 'Suspendido', updatedBy: 'captainA', updatedAt: serverTimestamp() }));
+  await assertFails(getDocs(query(collection(db, 'captainTeams', 'captainA', 'players'), limit(200))));
+  await assertFails(setDoc(ref(db, 'tournamentRegistrations', registrationId()), registration()));
+  await assertSucceeds(updateDoc(ref(admin, 'captainProfiles', 'captainA'), { disabled: false, ...meta }));
+  await assertSucceeds(getDoc(ref(db, 'captainTeams', 'captainA')));
+});
+test('equipo privado exige propietario y logo PNG/JPEG con tamaño acotado', async () => {
+  const db = captainDb();
+  const meta = { updatedBy: 'captainA', updatedAt: serverTimestamp() };
+  await assertSucceeds(updateDoc(ref(db, 'captainTeams', 'captainA'), { name: 'Lobos', logoBase64: 'iVBORw0KGgoAAA==', ...meta }));
+  await assertFails(updateDoc(ref(db, 'captainTeams', 'captainB'), { name: 'Intruso', ...meta }));
+  for (const logoBase64 of ['<script>alert(1)</script>', 'data:image/svg+xml;base64,AAA', 'iVBORw0KGgo' + 'A'.repeat(68269)]) {
+    await assertFails(updateDoc(ref(db, 'captainTeams', 'captainA'), { logoBase64, ...meta }));
+  }
+  await assertFails(updateDoc(ref(db, 'captainTeams', 'captainA'), { name: '', ...meta }));
+  await assertFails(updateDoc(ref(db, 'captainTeams', 'captainA'), { description: 'x'.repeat(1001), ...meta }));
+  await assertFails(updateDoc(ref(db, 'captainTeams', 'captainA'), { createdBy: 'captainB', ...meta }));
+});
+test('jugadores usan número único, campos mínimos y no permiten IDOR ni cambiar autor', async () => {
+  const db = captainDb();
+  const playerRef = doc(db, 'captainTeams', 'captainA', 'players', '8');
+  await assertSucceeds(setDoc(playerRef, player('captainA', { jerseyNumber: 8 })));
+  await assertFails(setDoc(playerRef, player('captainA', { jerseyNumber: 8 })));
+  await assertFails(setDoc(doc(db, 'captainTeams', 'captainA', 'players', 'wrongId'), player('captainA', { jerseyNumber: 9 })));
+  await assertFails(setDoc(doc(db, 'captainTeams', 'captainA', 'players', '100'), player('captainA', { jerseyNumber: 100 })));
+  await assertFails(setDoc(doc(db, 'captainTeams', 'captainA', 'players', '9'), player('captainA', { jerseyNumber: 9, birthDate: '2000-01-01' })));
+  await assertFails(setDoc(doc(db, 'captainTeams', 'captainA', 'players', '9'), player('captainA', { jerseyNumber: 9, position: 'admin' })));
+  await assertFails(deleteDoc(doc(db, 'captainTeams', 'captainB', 'players', '7')));
+  await assertSucceeds(deleteDoc(playerRef));
+});
+test('cambiar camiseta mueve jugador atómicamente sin duplicar números', async () => {
+  const db = captainDb();
+  const batch = writeBatch(db);
+  batch.set(doc(db, 'captainTeams', 'captainA', 'players', '12'), player('captainA', { jerseyNumber: 12 }));
+  batch.delete(doc(db, 'captainTeams', 'captainA', 'players', '7'));
+  await assertSucceeds(batch.commit());
+  await assertSucceeds(updateDoc(doc(db, 'captainTeams', 'captainA', 'players', '12'), { name: 'Nombre nuevo', updatedBy: 'captainA', updatedAt: serverTimestamp() }));
+  await assertFails(updateDoc(doc(db, 'captainTeams', 'captainA', 'players', '12'), { jerseyNumber: 13, updatedBy: 'captainA', updatedAt: serverTimestamp() }));
+});
+test('administrador consulta perfiles y jugadores sin cambiar identidad ni otorgar roles', async () => {
+  const db = adminDb();
+  await assertSucceeds(getDocs(query(collection(db, 'captainProfiles'), limit(200))));
+  await assertSucceeds(getDocs(query(collection(db, 'captainTeams'), limit(200))));
+  await assertSucceeds(getDocs(query(collection(db, 'captainTeams', 'captainA', 'players'), limit(200))));
+  await assertFails(updateDoc(ref(db, 'captainProfiles', 'captainA'), { email: 'different@example.test', updatedBy: adminUid, updatedAt: serverTimestamp() }));
+});
+test('inscripción pendiente enlaza equipo propio y torneo; duplicado y manipulación se rechazan', async () => {
+  const db = captainDb();
+  await assertSucceeds(getDoc(ref(db, 'tournamentRegistrations', registrationId())));
+  await assertSucceeds(setDoc(ref(db, 'tournamentRegistrations', registrationId()), registration()));
+  await assertFails(setDoc(ref(db, 'tournamentRegistrations', registrationId()), registration()));
+  await assertFails(setDoc(ref(db, 'tournamentRegistrations', 'other'), registration()));
+  await assertFails(setDoc(ref(db, 'tournamentRegistrations', registrationId('captainB')), registration('captainB')));
+  await assertFails(setDoc(ref(captainDb('captainB'), 'tournamentRegistrations', registrationId('captainB')), registration('captainB', { status: 'approved', entrantId: 'any' })));
+});
+test('capitán consulta sólo sus solicitudes y nunca autoaprueba ni modifica resultados', async () => {
+  const db = captainDb();
+  await assertSucceeds(setDoc(ref(db, 'tournamentRegistrations', registrationId()), registration()));
+  const other = captainDb('captainB');
+  await assertSucceeds(setDoc(ref(other, 'tournamentRegistrations', registrationId('captainB')), registration('captainB')));
+  await assertSucceeds(getDocs(query(collection(db, 'tournamentRegistrations'), where('captainUid', '==', 'captainA'), limit(200))));
+  await assertFails(getDocs(query(collection(db, 'tournamentRegistrations'), limit(200))));
+  await assertFails(getDoc(ref(db, 'tournamentRegistrations', registrationId('captainB'))));
+  await assertFails(updateDoc(ref(db, 'tournamentRegistrations', registrationId()), { status: 'approved', entrantId: registrationId(), reviewedBy: 'captainA', reviewedAt: serverTimestamp() }));
+  await assertFails(teamBatch(db, 'forgedEntrant', 3).commit());
+  await assertFails(matchBatch(db, 'forgedMatch').commit());
+});
+test('aprobar exige crear participante y aumentar contador en la misma operación', async () => {
+  await assertSucceeds(setDoc(ref(captainDb(), 'tournamentRegistrations', registrationId()), registration()));
+  const db = adminDb();
+  await assertFails(updateDoc(ref(db, 'tournamentRegistrations', registrationId()), { status: 'approved', entrantId: registrationId(), reviewedBy: adminUid, reviewedAt: serverTimestamp() }));
+  await assertSucceeds(approveBatch(db).commit());
+  const entrant = await getDoc(ref(db, 'adminTeams', registrationId()));
+  if (entrant.data().captainUid !== 'captainA') throw new Error('La aprobación perdió la propiedad del equipo.');
+  await assertFails(approveBatch(db, 'captainA', 2).commit());
+});
+test('aprobación rechaza cuenta suspendida, equipo falsificado y cupo agotado', async () => {
+  await assertSucceeds(setDoc(ref(captainDb(), 'tournamentRegistrations', registrationId()), registration()));
+  const db = adminDb();
+  await assertFails(approveBatch(db, 'captainA', 1, { name: 'Equipo falsificado' }).commit());
+  await assertSucceeds(updateDoc(ref(db, 'captainProfiles', 'captainA'), { disabled: true, updatedBy: adminUid, updatedAt: serverTimestamp() }));
+  await assertFails(approveBatch(db).commit());
+  await assertSucceeds(updateDoc(ref(db, 'captainProfiles', 'captainA'), { disabled: false, updatedBy: adminUid, updatedAt: serverTimestamp() }));
+  await env.withSecurityRulesDisabled(context => updateDoc(ref(context.firestore(), 'adminTournaments', 'registrationCup'), { maxTeams: 2, teamCount: 2 }));
+  await assertFails(approveBatch(db, 'captainA', 3).commit());
+});
+test('rechazar preserva contador y equipo; revisión terminal y nota acotada', async () => {
+  await assertSucceeds(setDoc(ref(captainDb(), 'tournamentRegistrations', registrationId()), registration()));
+  const db = adminDb();
+  const review = { status: 'rejected', entrantId: null, reviewNote: 'Revisa tu inscripción', reviewedBy: adminUid, reviewedAt: serverTimestamp() };
+  await assertFails(updateDoc(ref(db, 'tournamentRegistrations', registrationId()), { ...review, reviewNote: 'x'.repeat(501) }));
+  await assertSucceeds(updateDoc(ref(db, 'tournamentRegistrations', registrationId()), review));
+  await assertFails(approveBatch(db).commit());
+  const cup = await getDoc(ref(db, 'adminTournaments', 'registrationCup'));
+  if (cup.data().teamCount !== 0) throw new Error('Rechazar alteró el contador.');
+});
+test('configuración y aviso público se guardan juntos; aviso sólo expone texto institucional', async () => {
+  const db = adminDb();
+  await assertSucceeds(settingsBatch(db, {}, { privacyNotice: 'Texto institucional de prueba', privacyVersion: 'test-1' }).commit());
+  const anonymous = env.unauthenticatedContext().firestore();
+  await assertSucceeds(getDoc(ref(anonymous, 'publicPrivacy', 'notice')));
+  await assertFails(getDocs(query(collection(anonymous, 'publicPrivacy'), limit(200))));
+  await assertFails(getDoc(ref(anonymous, 'appSettings', 'general')));
+  await assertFails(getDoc(ref(anonymous, 'publicPrivacy', 'another')));
+  await assertFails(setDoc(ref(db, 'publicPrivacy', 'notice'), privacy({ privacyNotice: 'Texto desincronizado' })));
+  await assertFails(updateDoc(ref(db, 'appSettings', 'general'), { privacyNotice: 'Texto sin publicar', updatedBy: adminUid, updatedAt: serverTimestamp() }));
+  await assertFails(settingsBatch(db, {}, { email: 'private@example.test' }).commit());
+  await assertSucceeds(getDoc(ref(captainDb(), 'appSettings', 'general')));
+  await assertFails(settingsBatch(captainDb(), { updatedBy: 'captainA' }).commit());
+});
+test('inscripciones cerradas, torneo terminado y cupo completo impiden nuevas solicitudes', async () => {
+  const db = adminDb();
+  await assertSucceeds(settingsBatch(db, { registrationEnabled: false }).commit());
+  await assertFails(setDoc(ref(captainDb(), 'tournamentRegistrations', registrationId()), registration()));
+  await assertSucceeds(settingsBatch(db, { registrationEnabled: true }).commit());
+  await env.withSecurityRulesDisabled(context => updateDoc(ref(context.firestore(), 'adminTournaments', 'registrationCup'), { maxTeams: 2, teamCount: 2 }));
+  await assertFails(setDoc(ref(captainDb(), 'tournamentRegistrations', registrationId()), registration()));
+  await env.withSecurityRulesDisabled(context => updateDoc(ref(context.firestore(), 'adminTournaments', 'registrationCup'), { teamCount: 0, endDate: Timestamp.fromMillis(Date.now() - 86400000 * 2) }));
+  await assertFails(setDoc(ref(captainDb(), 'tournamentRegistrations', registrationId()), registration()));
+});
+test('edición administrativa de torneo preserva fechas, cuenta y propiedad', async () => {
+  const db = adminDb();
+  const meta = { updatedBy: adminUid, updatedAt: serverTimestamp() };
+  await assertSucceeds(updateDoc(ref(db, 'adminTournaments', 'cup'), { name: 'Copa actualizada', maxTeams: 4, ...meta }));
+  await assertFails(updateDoc(ref(db, 'adminTournaments', 'cup'), { maxTeams: 1, ...meta }));
+  await assertFails(updateDoc(ref(db, 'adminTournaments', 'cup'), { startDate: end, ...meta }));
+  await assertFails(updateDoc(ref(db, 'adminTournaments', 'cup'), { teamCount: 1, ...meta }));
+  await assertFails(updateDoc(ref(captainDb(), 'adminTournaments', 'cup'), { name: 'Cambio no autorizado', updatedBy: 'captainA', updatedAt: serverTimestamp() }));
+});
+
+test('configuración rechaza tipos incorrectos, textos extremos y campos privilegiados', async () => {
+  const db = adminDb();
+  for (const override of [{ registrationEnabled: 'true' }, { announcement: 'x'.repeat(1001) },
+    { privacyResponsible: 'x'.repeat(201) }, { privacyContact: 'x'.repeat(201) },
+    { privacyNotice: 'x'.repeat(10001) }, { privacyVersion: 'x'.repeat(41) }, { admin: true }]) {
+    await assertFails(settingsBatch(db, override).commit());
+  }
+  const anonymous = env.unauthenticatedContext().firestore();
+  await assertFails(setDoc(ref(anonymous, 'publicPrivacy', 'notice'), privacy()));
+  await assertFails(deleteDoc(ref(db, 'publicPrivacy', 'notice')));
 });

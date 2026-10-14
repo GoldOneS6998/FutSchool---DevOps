@@ -1,4 +1,8 @@
 {
   "indexes": [],
-  "fieldOverrides": []
+  "fieldOverrides": [
+    { "collectionGroup": "captainTeams", "fieldPath": "logoBase64", "indexes": [] },
+    { "collectionGroup": "appSettings", "fieldPath": "privacyNotice", "indexes": [] },
+    { "collectionGroup": "publicPrivacy", "fieldPath": "privacyNotice", "indexes": [] }
+  ]
 }

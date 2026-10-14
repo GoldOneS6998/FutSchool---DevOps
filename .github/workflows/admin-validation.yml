@@ -1,11 +1,14 @@
-name: Validar administrador
+name: Validar FutSchool
 on:
   workflow_dispatch:
   pull_request:
     paths:
       - 'app/**'
       - 'firestore.rules'
+      - 'firestore.indexes.json'
+      - 'firebase.json'
       - 'tests/firestore/**'
+      - 'scripts/**'
       - '.github/workflows/admin-validation.yml'
 permissions:
   contents: read

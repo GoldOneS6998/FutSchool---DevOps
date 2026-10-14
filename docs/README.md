@@ -2,6 +2,11 @@
 
 ## Producto y proceso
 
+- [Login y ambos roles](roles-y-capitanes.md): funcionalidades, permisos, datos y privacidad.
+- [Sprint 03](scrum/sprint-03-roles.md): integración de capitanes y gestión completa del panel.
+- [Validación de ambos roles](evidencias/validacion-roles.md): resultados reales de esta ampliación.
+- [QA local](qa-local.md): cuentas ficticias y emuladores aislados de producción.
+
 - [Administrador](administrador.md): Firestore, permisos, puesta en marcha y límites.
 - [Sprint de administración](scrum/sprint-02-administrador.md): alcance y criterios de aceptación.
 - [Validación del administrador](evidencias/validacion-admin.md): resultados ejecutados y pendientes reales.

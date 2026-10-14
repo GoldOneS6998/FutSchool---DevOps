@@ -1,6 +1,12 @@
-import 'package:flutter/material.dart';
+import 'dart:ui' show ImageFilter;
 
+import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+
+import '../domain/admin_management_repository.dart';
 import '../domain/admin_repository.dart';
+
+part 'admin_management.dart';
 
 /// Administration uses the repository's live data; no sample totals or users.
 class AdminPage extends StatefulWidget {
@@ -8,10 +14,12 @@ class AdminPage extends StatefulWidget {
     super.key,
     required this.repository,
     required this.onSignOut,
+    this.managementRepository,
   });
 
   final AdminRepository repository;
   final Future<void> Function() onSignOut;
+  final AdminManagementRepository? managementRepository;
 
   @override
   State<AdminPage> createState() => _AdminPageState();
@@ -39,6 +47,35 @@ class _AdminPageState extends State<AdminPage> {
     final repository = widget.repository;
     return _AdminScaffold(
       title: 'FutSchool',
+      bottomNavigation: _AdminNavigation(
+        selectedIndex: 0,
+        onSelected: (index) {
+          switch (index) {
+            case 1:
+              _open(
+                context,
+                _ManagementPage(
+                  repository: repository,
+                  managementRepository: widget.managementRepository,
+                ),
+              );
+            case 2:
+              _openAndNotify(
+                context,
+                _TournamentForm(repository: repository),
+                'Torneo creado.',
+              );
+            case 3:
+              _open(context, _MatchesPage(repository: repository));
+            case 4:
+              _openAndNotify(
+                context,
+                _MatchForm(repository: repository),
+                'Partido programado.',
+              );
+          }
+        },
+      ),
       actions: [
         IconButton(
           tooltip: 'Cerrar sesión',
@@ -52,23 +89,31 @@ class _AdminPageState extends State<AdminPage> {
           style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
-        const Text('Panel de control general'),
-        const SizedBox(height: 24),
-        _Statistics(repository: repository),
+        const Text(
+          'Panel de Control General • FutSchool',
+          style: TextStyle(color: Color(0xFFD1FAE5)),
+        ),
         const SizedBox(height: 24),
         _ActionCards(
           actions: [
             _AdminAction(
               title: 'Panel de Administración',
-              description: 'Gestiona torneos, equipos y partidos.',
+              description: 'Gestión de usuarios y configuraciones.',
               icon: Icons.settings_outlined,
-              onTap: () =>
-                  _open(context, _ManagementPage(repository: repository)),
+              assetName: 'home-settings',
+              onTap: () => _open(
+                context,
+                _ManagementPage(
+                  repository: repository,
+                  managementRepository: widget.managementRepository,
+                ),
+              ),
             ),
             _AdminAction(
               title: 'Crear torneo',
               description: 'Define fechas, cupos y descripción.',
               icon: Icons.emoji_events_outlined,
+              assetName: 'home-trophy',
               onTap: () => _openAndNotify(
                 context,
                 _TournamentForm(repository: repository),
@@ -79,12 +124,14 @@ class _AdminPageState extends State<AdminPage> {
               title: 'Partidos del torneo',
               description: 'Consulta horarios, estados y resultados.',
               icon: Icons.calendar_month_outlined,
+              assetName: 'calendar',
               onTap: () => _open(context, _MatchesPage(repository: repository)),
             ),
             _AdminAction(
               title: 'Crear partido',
               description: 'Programa dos equipos y reserva una cancha.',
               icon: Icons.add_circle_outline,
+              assetName: 'plus',
               onTap: () => _openAndNotify(
                 context,
                 _MatchForm(repository: repository),
@@ -93,37 +140,105 @@ class _AdminPageState extends State<AdminPage> {
             ),
           ],
         ),
+        if (widget.managementRepository != null) ...[
+          const SizedBox(height: 16),
+          _PendingRegistrationsBanner(repository: widget.managementRepository!),
+        ],
       ],
     );
   }
 }
 
 class _ManagementPage extends StatelessWidget {
-  const _ManagementPage({required this.repository});
+  const _ManagementPage({required this.repository, this.managementRepository});
 
   final AdminRepository repository;
+  final AdminManagementRepository? managementRepository;
 
   @override
   Widget build(BuildContext context) => _AdminScaffold(
-    title: 'Administración',
+    title: 'Panel de Administración',
+    bottomNavigation: _AdminNavigation(
+      selectedIndex: 1,
+      onSelected: (index) {
+        switch (index) {
+          case 0:
+            Navigator.of(context).popUntil((route) => route.isFirst);
+          case 2:
+            _openAndNotify(
+              context,
+              _TournamentForm(repository: repository),
+              'Torneo creado.',
+            );
+          case 3:
+            _open(context, _MatchesPage(repository: repository));
+          case 4:
+            _openAndNotify(
+              context,
+              _MatchForm(repository: repository),
+              'Partido programado.',
+            );
+        }
+      },
+    ),
     children: [
-      _Statistics(repository: repository),
+      _Statistics(
+        repository: repository,
+        managementRepository: managementRepository,
+      ),
       const SizedBox(height: 24),
-      _ActionCards(
+      _ManagementRows(
         actions: [
-          _AdminAction(
-            title: 'Gestionar torneos',
-            description: 'Consulta los torneos y crea uno nuevo.',
-            icon: Icons.emoji_events_outlined,
-            onTap: () =>
-                _open(context, _TournamentsPage(repository: repository)),
-          ),
+          if (managementRepository != null)
+            _AdminAction(
+              title: 'Gestionar usuarios',
+              description: 'Capitanes y acceso a la aplicación.',
+              icon: Icons.person_outline,
+              assetName: 'user',
+              onTap: () => _open(
+                context,
+                _AdminUsersPage(repository: managementRepository!),
+              ),
+            ),
           _AdminAction(
             title: 'Gestionar equipos',
-            description: 'Registra equipos dentro de un torneo.',
+            description: 'Inscripciones e integrantes.',
             icon: Icons.shield_outlined,
-            onTap: () => _open(context, _TeamsPage(repository: repository)),
+            assetName: 'shield',
+            onTap: () => _open(
+              context,
+              managementRepository == null
+                  ? _TeamsPage(repository: repository)
+                  : _AdminTeamsManagementPage(
+                      repository: managementRepository!,
+                      adminRepository: repository,
+                    ),
+            ),
           ),
+          _AdminAction(
+            title: 'Gestionar torneos',
+            description: 'Fechas, cupos e inscripciones.',
+            icon: Icons.emoji_events_outlined,
+            assetName: 'trophy',
+            onTap: () => _open(
+              context,
+              _TournamentsPage(
+                repository: repository,
+                managementRepository: managementRepository,
+              ),
+            ),
+          ),
+          if (managementRepository != null)
+            _AdminAction(
+              title: 'Configuración general',
+              description: 'Inscripciones, avisos y privacidad.',
+              icon: Icons.settings_outlined,
+              assetName: 'settings',
+              onTap: () => _open(
+                context,
+                _AdminConfigurationPage(repository: managementRepository!),
+              ),
+            ),
           _AdminAction(
             title: 'Gestionar partidos',
             description: 'Programa encuentros y actualiza marcadores.',
@@ -134,17 +249,18 @@ class _ManagementPage extends StatelessWidget {
       ),
       const SizedBox(height: 24),
       const Text(
-        'Las cuentas de acceso se administran desde Firebase. '
-        'Este panel no asigna permisos de administrador.',
+        'Los permisos de administrador se asignan desde un entorno de confianza. '
+        'Suspender un capitán limita su acceso a FutSchool.',
       ),
     ],
   );
 }
 
 class _Statistics extends StatefulWidget {
-  const _Statistics({required this.repository});
+  const _Statistics({required this.repository, this.managementRepository});
 
   final AdminRepository repository;
+  final AdminManagementRepository? managementRepository;
 
   @override
   State<_Statistics> createState() => _StatisticsState();
@@ -152,7 +268,11 @@ class _Statistics extends StatefulWidget {
 
 class _StatisticsState extends State<_Statistics> {
   late final _tournaments = widget.repository.watchTournaments();
-  late final _teams = widget.repository.watchTeams();
+  late final Stream<int> _teams = widget.managementRepository != null
+      ? widget.managementRepository!.watchCaptainTeams().map(
+          (teams) => teams.length,
+        )
+      : widget.repository.watchTeams().map((teams) => teams.length);
   late final _matches = widget.repository.watchMatches();
 
   @override
@@ -170,15 +290,24 @@ class _StatisticsState extends State<_Statistics> {
           }
           final counts = [
             ('Torneos', tournaments.data!.length),
-            ('Equipos', teams.data!.length),
-            ('Partidos', matches.data!.length),
+            ('Equipos', teams.data!),
+            (
+              'Partidos',
+              matches.data!
+                  .where((match) => match.status == AdminMatchStatus.scheduled)
+                  .length,
+            ),
           ];
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               LayoutBuilder(
                 builder: (context, constraints) {
-                  final columns = constraints.maxWidth >= 600 ? 3 : 1;
+                  final columns =
+                      constraints.maxWidth >= 310 &&
+                          MediaQuery.textScalerOf(context).scale(1) < 1.5
+                      ? 3
+                      : 1;
                   final width =
                       (constraints.maxWidth - (columns - 1) * 12) / columns;
                   return Wrap(
@@ -190,7 +319,7 @@ class _StatisticsState extends State<_Statistics> {
                           width: width,
                           child: _Panel(
                             child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
                                 Text(count.$1),
                                 Text(
@@ -199,7 +328,15 @@ class _StatisticsState extends State<_Statistics> {
                                       .textTheme
                                       .headlineMedium,
                                 ),
-                                const Text('Registros cargados'),
+                                Text(
+                                  count.$1 == 'Partidos'
+                                      ? 'Programados'
+                                      : 'Registrados',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: Color(0xFF9CA3AF),
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -208,7 +345,9 @@ class _StatisticsState extends State<_Statistics> {
                   );
                 },
               ),
-              if (counts.any((count) => count.$2 >= 200)) ...[
+              if (tournaments.data!.length >= 200 ||
+                  teams.data! >= 200 ||
+                  matches.data!.length >= 200) ...[
                 const SizedBox(height: 8),
                 const Text(
                   'Cada vista muestra hasta 200 registros. '
@@ -224,9 +363,10 @@ class _StatisticsState extends State<_Statistics> {
 }
 
 class _TournamentsPage extends StatefulWidget {
-  const _TournamentsPage({required this.repository});
+  const _TournamentsPage({required this.repository, this.managementRepository});
 
   final AdminRepository repository;
+  final AdminManagementRepository? managementRepository;
 
   @override
   State<_TournamentsPage> createState() => _TournamentsPageState();
@@ -289,6 +429,18 @@ class _TournamentsPageState extends State<_TournamentsPage> {
                         spacing: 8,
                         runSpacing: 8,
                         children: [
+                          if (widget.managementRepository != null)
+                            OutlinedButton.icon(
+                              onPressed: () => _open(
+                                context,
+                                _TournamentManagementPage(
+                                  tournament: tournament,
+                                  repository: widget.managementRepository!,
+                                ),
+                              ),
+                              icon: const Icon(Icons.edit_outlined),
+                              label: const Text('Editar e inscripciones'),
+                            ),
                           OutlinedButton.icon(
                             onPressed: () => _open(
                               context,
@@ -549,25 +701,12 @@ class _MatchesPageState extends State<_MatchesPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Text(
-                          _dateTimeText(match.startsAt),
-                          style: Theme.of(context).textTheme.titleMedium,
+                        _AdminMatchSummary(
+                          match: match,
+                          homeName: names[match.homeTeamId] ?? 'Equipo local',
+                          awayName:
+                              names[match.awayTeamId] ?? 'Equipo visitante',
                         ),
-                        const SizedBox(height: 6),
-                        Text(_statusText(match.status)),
-                        const SizedBox(height: 12),
-                        Text(
-                          '${names[match.homeTeamId] ?? 'Equipo local'} '
-                          'vs ${names[match.awayTeamId] ?? 'Equipo visitante'}',
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                        if (match.homeScore != null && match.awayScore != null)
-                          Text(
-                            '${match.homeScore} – ${match.awayScore}',
-                            style: Theme.of(context).textTheme.headlineSmall,
-                          ),
-                        const SizedBox(height: 10),
-                        Text('Cancha: ${match.courtId}'),
                         if (match.status != AdminMatchStatus.cancelled) ...[
                           const SizedBox(height: 12),
                           OutlinedButton.icon(
@@ -1044,10 +1183,26 @@ class _MatchFormState extends State<_MatchForm> {
                       : 'Usa un nombre válido para la cancha.',
                 ),
                 const SizedBox(height: 12),
-                const Text(
-                  'Cada partido reserva 60 minutos, empezando en una hora exacta. '
-                  'Usa siempre el mismo nombre para la misma cancha. '
-                  'Un horario ocupado será rechazado.',
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0x1AF59E0B),
+                    border: Border.all(color: const Color(0xFFF59E0B)),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Row(
+                    children: [
+                      _AdminAsset('alert-triangle', width: 16, height: 16),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Cada partido reserva 60 minutos, empezando en una hora exacta. '
+                          'Usa siempre el mismo nombre para la misma cancha. Un horario ocupado será rechazado.',
+                          style: TextStyle(color: Color(0xFFF59E0B)),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 _FormFeedback(busy: _busy, error: _error),
                 const SizedBox(height: 20),
@@ -1235,11 +1390,13 @@ class _AdminScaffold extends StatelessWidget {
     required this.title,
     required this.children,
     this.actions,
+    this.bottomNavigation,
   });
 
   final String title;
   final List<Widget> children;
   final List<Widget>? actions;
+  final Widget? bottomNavigation;
 
   @override
   Widget build(BuildContext context) {
@@ -1250,19 +1407,40 @@ class _AdminScaffold extends StatelessWidget {
     final theme = ThemeData(
       colorScheme: scheme,
       useMaterial3: true,
-      scaffoldBackgroundColor: const Color(0xFF10271D),
+      scaffoldBackgroundColor: const Color(0xFF0B1F14),
       appBarTheme: const AppBarTheme(
-        backgroundColor: Color(0xFF10271D),
+        backgroundColor: Color(0xFF0B1F14),
         foregroundColor: Colors.white,
+        titleTextStyle: TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.w800,
+          color: Colors.white,
+        ),
       ),
-      inputDecorationTheme: const InputDecorationTheme(
-        border: OutlineInputBorder(),
+      inputDecorationTheme: InputDecorationTheme(
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0xFF16A34A)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0xFF16A34A)),
+        ),
         filled: true,
-        fillColor: Color(0xFF183729),
+        fillColor: const Color(0x0DFFFFFF),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          backgroundColor: const Color(0xFF16A34A),
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
         ),
       ),
     );
@@ -1272,15 +1450,48 @@ class _AdminScaffold extends StatelessWidget {
         appBar: AppBar(
           toolbarHeight: 72 * MediaQuery.textScalerOf(context).scale(1),
           title: Text(title, maxLines: 2, overflow: TextOverflow.ellipsis),
-          actions: actions,
+          actions:
+              actions ??
+              [
+                Padding(
+                  padding: const EdgeInsets.only(right: 24),
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF16A34A),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const _AdminAsset('balloon', width: 18, height: 18),
+                  ),
+                ),
+              ],
+          leading: Navigator.of(context).canPop()
+              ? IconButton(
+                  tooltip: 'Volver',
+                  onPressed: () => Navigator.of(context).maybePop(),
+                  style: IconButton.styleFrom(
+                    backgroundColor: const Color(0x0DFFFFFF),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      side: const BorderSide(color: Color(0xFF16A34A)),
+                    ),
+                  ),
+                  icon: const _AdminAsset('arrow-left', width: 18, height: 18),
+                )
+              : null,
         ),
-        body: SafeArea(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1000),
-              child: ListView(
-                padding: const EdgeInsets.all(20),
-                children: children,
+        bottomNavigationBar: bottomNavigation,
+        body: _AdminBackground(
+          child: SafeArea(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1000),
+                child: ListView(
+                  padding: const EdgeInsets.all(24),
+                  children: children,
+                ),
               ),
             ),
           ),
@@ -1296,12 +1507,14 @@ class _AdminAction {
     required this.description,
     required this.icon,
     required this.onTap,
+    this.assetName,
   });
 
   final String title;
   final String description;
   final IconData icon;
   final VoidCallback onTap;
+  final String? assetName;
 }
 
 class _ActionCards extends StatelessWidget {
@@ -1312,7 +1525,11 @@ class _ActionCards extends StatelessWidget {
   @override
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, constraints) {
-      final columns = constraints.maxWidth >= 640 ? 2 : 1;
+      final columns =
+          constraints.maxWidth >= 310 &&
+              MediaQuery.textScalerOf(context).scale(1) < 1.5
+          ? 2
+          : 1;
       final width = (constraints.maxWidth - (columns - 1) * 16) / columns;
       return Wrap(
         spacing: 16,
@@ -1328,22 +1545,47 @@ class _ActionCards extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                   onTap: action.onTap,
                   child: Padding(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(
-                          action.icon,
-                          size: 32,
-                          color: const Color(0xFF47CD80),
+                        Container(
+                          width: 40,
+                          height: 40,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: const Color(0x2616A34A),
+                            border: Border.all(color: const Color(0xFF16A34A)),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: action.assetName == null
+                              ? Icon(
+                                  action.icon,
+                                  size: 20,
+                                  color: const Color(0xFF22C55E),
+                                )
+                              : _AdminAsset(
+                                  action.assetName!,
+                                  width: 20,
+                                  height: 20,
+                                ),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 12),
                         Text(
                           action.title,
-                          style: Theme.of(context).textTheme.titleLarge,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
                         const SizedBox(height: 8),
-                        Text(action.description),
+                        Text(
+                          action.description,
+                          style: const TextStyle(
+                            color: Color(0xFF9CA3AF),
+                            fontSize: 12,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -1365,10 +1607,10 @@ class _Panel extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Card(
     margin: EdgeInsets.zero,
-    color: const Color(0xFF102F21),
+    color: const Color(0xFF0F241B),
     clipBehavior: Clip.antiAlias,
     shape: RoundedRectangleBorder(
-      side: const BorderSide(color: Color(0xFF286A43)),
+      side: const BorderSide(color: Color(0xFF16A34A)),
       borderRadius: BorderRadius.circular(20),
     ),
     child: Padding(padding: padding, child: child),
@@ -1399,6 +1641,7 @@ class _TournamentPicker extends StatelessWidget {
       key: ValueKey(('tournament', validId, allowAll)),
       initialValue: validId ?? (allowAll ? '' : null),
       isExpanded: true,
+      icon: const _AdminAsset('chevron-down', width: 16, height: 16),
       decoration: const InputDecoration(labelText: 'Torneo'),
       items: [
         if (allowAll)
@@ -1443,6 +1686,7 @@ class _TeamPicker extends StatelessWidget {
       key: ValueKey((label, validId)),
       initialValue: validId,
       isExpanded: true,
+      icon: const _AdminAsset('chevron-down', width: 16, height: 16),
       decoration: InputDecoration(labelText: label),
       items: [
         for (final team in teams)
@@ -1510,7 +1754,11 @@ class _DateField extends StatelessWidget {
           labelText: label,
           enabled: enabled,
           errorText: field.errorText,
-          suffixIcon: const Icon(Icons.calendar_month_outlined),
+          suffixIcon: const Center(
+            widthFactor: 1,
+            heightFactor: 1,
+            child: _AdminAsset('chevron-down', width: 16, height: 16),
+          ),
         ),
         child: Text(value == null ? 'Seleccionar fecha' : _dateText(value!)),
       ),
@@ -1527,7 +1775,8 @@ class _FieldPair extends StatelessWidget {
   @override
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, constraints) {
-      if (constraints.maxWidth >= 600) {
+      if (constraints.maxWidth >= 310 &&
+          MediaQuery.textScalerOf(context).scale(1) < 1.5) {
         return Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1608,7 +1857,7 @@ class _LimitNotice extends StatelessWidget {
   @override
   Widget build(BuildContext context) => count >= 200
       ? const Text(
-          'Esta vista muestra hasta 200 registros. Selecciona un torneo para acotar la consulta.',
+          'Esta vista muestra hasta 200 registros; pueden existir más en la base de datos.',
         )
       : const SizedBox.shrink();
 }

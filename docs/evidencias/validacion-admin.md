@@ -1,5 +1,8 @@
 # Validación del administrador
 
+La evidencia del incremento posterior está en [validación de ambos roles](validacion-roles.md).
+Esta página conserva los resultados históricos.
+
 Revisión local del 9 de octubre de 2026. Base: `origin/chore/limpieza` en
 `b99d21c`. Rama de implementación: `feature/administrador`.
 
@@ -21,8 +24,11 @@ abajo fueron ejecutadas el 9 de octubre; no se les atribuye una fecha nueva.
 | Detección de credenciales | Verificado parcialmente | 0 coincidencias de los patrones de claves privadas, tokens GitHub, refresh tokens y client secrets en archivos de texto versionables. |
 | Revisión cruzada del repositorio y reglas | Ejecutada | No se encontraron incompatibilidades materiales de campos o permisos. No equivale a certificación o auditoría completa. |
 | Dependencias Node | Revisadas, alertas residuales | `npm audit --json`: 0 críticas, 7 altas, 5 moderadas; 12 entradas de paquetes afectadas, incluyendo propagación transitiva. |
-| Proyecto Firebase real | Comprobado parcialmente | Consola del 12 de octubre: base `(default)` Standard/nativa creada en `nam5`, reglas iniciales de denegación total. Claim y pruebas de extremo a extremo pendientes. |
-| CI de GitHub y revisión del equipo | Correcciones preparadas | PR 14 sigue en borrador. SonarQube identificó 2 hallazgos de seguridad y 4 de mantenimiento; corregidos en código, nuevo análisis remoto pendiente. |
+| Proyecto Firebase real | Comprobado parcialmente | Base `(default)` Standard/nativa en `nam5`; reglas publicadas por consola el 12 de octubre con autorización expresa. Claim y pruebas de extremo a extremo pendientes. |
+| Lectura real sin sesión | Verificado | GET REST de `adminTournaments`, sin Authorization: HTTP 403, `PERMISSION_DENIED`, `Missing or insufficient permissions`. No se escribieron documentos. |
+| Flutter en GitHub Actions | Verificado | Job `flutter` del run `38318081599`, revisión `6856c00`, aprobado: análisis, pruebas y compilación web. |
+| SonarQube Cloud | Verificado parcialmente | Quality Gate aprobado tras corregir los 6 hallazgos del PR 14; 0 issues abiertos de código nuevo. Persiste una advertencia de codificación, que requiere revisar logs del escáner. |
+| Firestore en GitHub Actions | Corrección preparada | Job Linux del mismo run falló antes de pruebas por `picomatch@4.0.7` ausente en el lockfile. Entrada opcional obtenida del resolver npm limpio e incorporada conservando las demás versiones. Nueva ejecución remota pendiente. |
 
 Herramientas de cliente: Flutter 3.47.5 y Dart 3.13.4. Herramientas del emulador:
 Node.js 24.13.0, Java 21 y Firebase CLI 15.33.0. Las versiones instalables quedan
@@ -61,6 +67,11 @@ El 12 de octubre se repitió la suite de reglas tras `npm ci --ignore-scripts`:
 de operador después de corregir los constructores de error y la copia de claims.
 No se ejecutó el script con credenciales ni se alteraron usuarios reales.
 
+La reparación del lockfile pasó la validación `npm ci --dry-run --ignore-scripts`
+con npm 12.2.0. Esa comprobación local emitió una advertencia porque Node 24.13
+queda por debajo de su requisito 24.15; no sustituye la ejecución Linux del CI,
+que usa Node 24.21. La prueba Windows del emulador utilizó npm 11.6.2 compatible.
+
 Las acciones de `admin-validation.yml` quedaron fijadas a SHA completos obtenidos
 de los repositorios oficiales, y la instalación de npm desactiva scripts de ciclo
 de vida. Estos cambios corrigen los hallazgos de suministro de dependencias del
@@ -88,7 +99,9 @@ asserts comprueban tanto esos rechazos como las operaciones que deben permitirse
 ## Lo que no se ha comprobado
 
 No se realizaron altas, cambios de cuentas ni pruebas de autenticación en el
-proyecto real. Tampoco se publicó un sitio, se desplegaron reglas, se verificó
+proyecto real. Las reglas sí se publicaron por consola con autorización el 12 de
+octubre; esta publicación no demuestra su funcionamiento con sesiones reales.
+Tampoco se publicó un sitio externo, se verificó
 IAM, se probó el repositorio Flutter de extremo a extremo contra Firebase real,
 se comprobó un respaldo o se ejecutó la app en Android/iOS en esta entrega.
 Los dobles de prueba y el emulador no sustituyen esas verificaciones.
