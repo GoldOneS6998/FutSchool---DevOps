@@ -17,7 +17,10 @@ Authentication a 9099 y Firestore a 8080. Todos los servicios escuchan en loopba
    ```powershell
    $env:FIREBASE_AUTH_EMULATOR_HOST='127.0.0.1:9099'
    $env:FIRESTORE_EMULATOR_HOST='127.0.0.1:8080'
+   $qaSecret = Read-Host 'Contraseña temporal de QA (mínimo 12 caracteres)' -AsSecureString
+   $env:FUTSCHOOL_QA_PASSWORD = [Net.NetworkCredential]::new('', $qaSecret).Password
    node preview-seed.cjs
+   Remove-Item Env:FUTSCHOOL_QA_PASSWORD
    ```
 
 3. Desde `app`, compilar/abrir el cliente exclusivamente local:
@@ -33,8 +36,9 @@ Authentication a 9099 y Firestore a 8080. Todos los servicios escuchan en loopba
 
 4. Abrir `http://localhost:5431/`. Correo `captain.demo@example.test` para capitán,
    `admin.demo@example.test` para administrador y `other.demo@example.test` para
-   segundo capitán. Contraseña **solo de estas cuentas ficticias locales**:
-   `Demo-only-local-2026!`. Nunca usarla para una cuenta real. El script asigna
+   segundo capitán. Usa la contraseña temporal que introdujiste en el paso 2;
+   no existe una contraseña predeterminada. Nunca reutilices una contraseña real.
+   El script no imprime esa contraseña ni reinicia el cupo de un torneo existente. Asigna
    verificación/claim solo en el emulador y rechaza ejecutarse sin los dos destinos
    locales explícitos.
 
