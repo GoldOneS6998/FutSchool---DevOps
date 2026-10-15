@@ -98,16 +98,6 @@ class _AdminNavigation extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onSelected;
 
-  Widget _icon(int index, (String, String, double, double) item) {
-    if (index == 0 && selectedIndex != 0) {
-      return const _AdminAsset('home-outline', width: 22, height: 22);
-    }
-    if (index == 1 && selectedIndex == 1) {
-      return const _AdminAsset('tournament-active', width: 40, height: 40);
-    }
-    return _AdminAsset(item.$2, width: item.$3, height: item.$4);
-  }
-
   @override
   Widget build(BuildContext context) => Container(
     decoration: const BoxDecoration(
@@ -117,47 +107,86 @@ class _AdminNavigation extends StatelessWidget {
     ),
     child: SafeArea(
       top: false,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              for (final entry in const [
-                ('Inicio', 'home-active', 40.0, 40.0),
-                ('Panel', 'nav-trophy', 22.0, 14.3),
-                ('Crear torneo', 'nav-shield', 22.0, 22.0),
-                ('Partidos', 'nav-profile', 12.5714, 9.77778),
-                ('Crear partido', 'nav-profile', 12.5714, 9.77778),
-              ].indexed)
-                Semantics(
-                  selected: selectedIndex == entry.$1,
-                  child: TextButton(
-                    key: ValueKey('adminNav:${entry.$1}'),
-                    onPressed: () => onSelected(entry.$1),
-                    style: TextButton.styleFrom(
-                      foregroundColor: selectedIndex == entry.$1
-                          ? const Color(0xFF22C55E)
-                          : const Color(0xFF9CA3AF),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 4,
-                        vertical: 6,
-                      ),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
+      child: Align(
+        heightFactor: 1,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1000),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final minimumWidth =
+                    320 * MediaQuery.textScalerOf(context).scale(1);
+                final width = constraints.maxWidth < minimumWidth
+                    ? minimumWidth
+                    : constraints.maxWidth;
+                return SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: SizedBox(
+                    width: width,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        SizedBox(
-                          height: 40,
-                          child: Center(child: _icon(entry.$1, entry.$2)),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(entry.$2.$1, style: const TextStyle(fontSize: 11)),
+                        for (final entry in const [
+                          ('Inicio', Icons.home_outlined),
+                          ('Panel', Icons.dashboard_outlined),
+                          ('Crear torneo', Icons.emoji_events_outlined),
+                          ('Partidos', Icons.calendar_month_outlined),
+                          ('Crear partido', Icons.add_circle_outline),
+                        ].indexed)
+                          Expanded(
+                            child: Semantics(
+                              selected: selectedIndex == entry.$1,
+                              child: TextButton(
+                                key: ValueKey('adminNav:${entry.$1}'),
+                                onPressed: () => onSelected(entry.$1),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: selectedIndex == entry.$1
+                                      ? const Color(0xFF22C55E)
+                                      : const Color(0xFFB6C2BC),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 2,
+                                    vertical: 6,
+                                  ),
+                                ),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      width: 48,
+                                      height: 40,
+                                      alignment: Alignment.center,
+                                      decoration: BoxDecoration(
+                                        color: selectedIndex == entry.$1
+                                            ? const Color(0xFF16A34A)
+                                            : Colors.transparent,
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Icon(
+                                        entry.$2.$2,
+                                        size: 24,
+                                        color: selectedIndex == entry.$1
+                                            ? Colors.white
+                                            : null,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      entry.$2.$1,
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(fontSize: 12),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
                       ],
                     ),
                   ),
-                ),
-            ],
+                );
+              },
+            ),
           ),
         ),
       ),
