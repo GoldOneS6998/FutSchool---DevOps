@@ -61,21 +61,31 @@ no necesita una transacción de escritura. La creación conserva comprobación
 atómica y permisos. Se añadió manejo específico de permisos, tiempo de espera y
 ausencia de correo, sin conceder acceso ni ocultar el fallo como éxito.
 
-La consola Firebase no permitió verificar la configuración actual: mostró error
-al cargar el estado de aceptación de condiciones. Firebase CLI no tiene cuentas
-autorizadas. La última publicación confirmada corresponde a reglas de
-administración, anteriores a las colecciones de capitanes. Activar las reglas
-nuevas y repetir el acceso real sigue pendiente; no se afirma haber corregido la
-causa del incidente real únicamente por mejorar el cliente.
+El 14 de octubre se pudo acceder a la consola y confirmar que las reglas activas
+del 12 de octubre tenían 136 líneas, no incluían `captainProfiles` y denegaban
+por defecto esas operaciones. Tras autorización explícita del propietario se
+publicaron las 301 líneas de `firestore.rules`. El contenido del editor se
+comparó con el archivo antes de publicar. La consola muestra la nueva versión
+activa con estrella y hora «Hoy • 8:52 p.m.», sin cambios pendientes.
+
+SHA-256 del archivo publicado:
+`84A2C676588B97CFDA1B4D3D23DA1B82B62540E30E53BCF8C6DE1CAB24AABEF5`.
+
+Comprobaciones posteriores: servidor local `http://localhost:5421/` HTTP 200;
+lectura REST anónima de `captainProfiles/verification-probe` HTTP 403; lectura
+del aviso público `publicPrivacy/notice` HTTP 404 (documento todavía inexistente).
+No se crearon datos reales para esta comprobación. Sigue pendiente repetir el
+inicio de sesión real; publicar las reglas no equivale a verificar ese recorrido.
 
 ## Pendientes externos
 
-- Publicar y comprobar las reglas e índices de este incremento en `futschool-2ef84`.
+- Publicar las exenciones de índices de este incremento en `futschool-2ef84`.
 - Comprobar la cuenta administradora verificada y asignar su claim por operador.
 - Verificar acceso real de ambos roles, Google y correo de recuperación.
 - Completar responsable universitario, aviso, conservación y procedimiento ARCO.
 - Revisar alertas de herramientas, respaldos restaurables, monitoreo y App Check.
-- Revisar el resultado del workflow remoto correspondiente al commit entregado.
+- Los controles remotos Flutter, Firestore y SonarCloud del commit `6ee885c`
+  terminaron correctamente; los cambios posteriores aquí solo documentan la publicación.
 
 El proyecto no se declara listo para producción. Las reglas niegan por defecto
 operaciones no autorizadas; no se habilitó acceso general para evitar el error.
