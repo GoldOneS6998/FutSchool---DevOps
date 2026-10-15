@@ -4,7 +4,7 @@
 
 El módulo permite al administrador crear torneos, registrar equipos, programar partidos de una hora y actualizar su estado y marcador. Prioriza funcionamiento y persistencia real sobre el diseño de las capturas. Flutter utiliza Firebase Authentication para la identidad y Cloud Firestore para los datos y la autorización de cada operación.
 
-La cuenta solicitada es `ernex9897@gmail.com`. El correo identifica la cuenta que el operador asignará; **no constituye una lista de permisos en el cliente**. Solo un ID token firmado por Firebase que incluya `admin: true` y `email_verified: true` permite acceder a las colecciones administrativas. Una persona no obtiene permisos al escribir `admin` en un formulario o documento. La aplicación nunca incluye Firebase Admin SDK ni credenciales de servidor.
+La cuenta solicitada es `ernestopb.ti23@utsjr.edu.mx`. El correo identifica la cuenta que el operador asignará; **no constituye una lista de permisos en el cliente**. Solo un ID token firmado por Firebase que incluya `admin: true` y `email_verified: true` permite acceder a las colecciones administrativas. Una persona no obtiene permisos al escribir `admin` en un formulario o documento. La aplicación nunca incluye Firebase Admin SDK ni credenciales de servidor.
 
 La ampliación del 13 de octubre incorpora inscripciones de capitanes verificados,
 consulta privada de integrantes, gestión del acceso de capitanes y configuración
@@ -82,7 +82,7 @@ configurado y su base Firestore predeterminada `(default)`.
    npx firebase deploy --only firestore --project futschool-2ef84 --config ../../firebase.json
    ```
 
-5. La cuenta `ernex9897@gmail.com` debe existir en Authentication y confirmar su correo por el flujo normal de Firebase. El script no crea la cuenta, no conoce su contraseña y no marca artificialmente el correo como verificado.
+5. La cuenta `ernestopb.ti23@utsjr.edu.mx` debe existir en Authentication y confirmar su correo por el flujo normal de Firebase. El script no crea la cuenta, no conoce su contraseña y no marca artificialmente el correo como verificado.
 6. El operador configura [Application Default Credentials](https://cloud.google.com/docs/authentication/provide-credentials-adc) con una identidad autorizada para consultar/actualizar usuarios de Authentication. Por ejemplo, en un equipo confiable con Google Cloud CLI instalada:
 
    ```powershell

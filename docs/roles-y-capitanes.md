@@ -31,7 +31,7 @@ presentación no asignan automáticamente un campeón ni sustituyen un reglament
 Gestionar usuarios aquí significa gestionar perfiles y acceso a **FutSchool**.
 No cambia contraseñas, deshabilita Authentication, elimina cuentas ni asigna
 administradores desde el cliente. La cuenta administradora solicitada sigue
-siendo `ernex9897@gmail.com`, con asignación por operador según
+siendo `ernestopb.ti23@utsjr.edu.mx`, con asignación por operador según
 [administración](administrador.md).
 
 ## Persistencia y límites de confianza

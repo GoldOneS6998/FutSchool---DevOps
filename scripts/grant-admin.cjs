@@ -8,7 +8,7 @@ const { initializeApp, applicationDefault, deleteApp } = adminRequire('firebase-
 const { getAuth } = adminRequire('firebase-admin/auth');
 
 const projectId = 'futschool-2ef84';
-const administratorEmail = 'ernex9897@gmail.com';
+const administratorEmail = 'ernestopb.ti23@utsjr.edu.mx';
 const args = new Set(process.argv.slice(2));
 const allowedArgs = new Set(['--apply', '--revoke', '--help']);
 if ([...args].some(argument => !allowedArgs.has(argument))) {
@@ -17,7 +17,7 @@ if ([...args].some(argument => !allowedArgs.has(argument))) {
 }
 if (args.has('--help')) {
   console.log('Uso: npm run grant-admin -- [--apply] [--revoke]');
-  console.log('Cuenta fija: ernex9897@gmail.com; proyecto fijo: futschool-2ef84.');
+  console.log(`Cuenta fija: ${administratorEmail}; proyecto fijo: ${projectId}.`);
   console.log('Sin --apply comprueba la cuenta y muestra el cambio, sin modificarla.');
   console.log('Requiere credenciales Application Default Credentials de un operador autorizado.');
   process.exit(0);
